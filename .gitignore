@@ -107,4 +107,5 @@ dist
 .DS_Store
 
 # Tempory projects
+.vscode
 
