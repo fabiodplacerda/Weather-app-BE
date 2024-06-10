@@ -14,4 +14,20 @@ export default class FavouriteCityController {
       res.status(500).json({ message: e.message });
     }
   };
+
+  addCity = async (req, res) => {
+    const invalidError = new Error("Invalid City");
+    try {
+      if (!req.body) throw invalidError;
+      const newCity = await this.#service.addCity(req.body);
+      if (!newCity._id) throw invalidError;
+      res.status(201).json(newCity);
+    } catch (e) {
+      // console.log(e);
+      if (e === invalidError) {
+        res.status(400).json({ message: e.message });
+      }
+      res.status(500).json({ message: e.message });
+    }
+  };
 }
