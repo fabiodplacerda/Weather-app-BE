@@ -1,154 +1,246 @@
-import { expect } from "chai";
-import sinon from "sinon";
-import testFavouriteCities from "../data/testCities.js";
-
-import Config from "../../src/config/Config.js";
-import FavouriteCityRoutes from "../../src/routes/FavouriteCity.routes.js";
-import Database from "../../src/database/Database.js";
-import Server from "../../src/server/Server.js";
-import FavouriteCity from "../../src/models/favouriteCity.model.js";
 import supertest from "supertest";
+import { expect, use } from "chai";
+import sinon from "sinon";
+
+// Server
+import Server from "../../src/server/Server.js";
+import Database from "../../src/database/Database.js";
+import Config from "../../src/config/Config.js";
+
+// Models
+import FavouriteCity from "../../src/models/favouriteCity.model.js";
+import User from "../../src/models/user.model.js";
+
+// Test data
+import testFavouriteCities from "../data/testCities.js";
+import testUsers from "../data/testUsers.js";
+
+// Routes
+import FavouriteCityRoutes from "../../src/routes/FavouriteCity.routes.js";
+import UserRoutes from "../../src/routes/User.routes.js";
+
+//Controllers
 import FavouriteCityController from "../../src/controller/FavouriteCity.controller.js";
+import UserController from "../../src/controller/User.controller.js";
+
+// Services
 import FavouriteCityService from "../../src/services/FavouriteCity.service.js";
+import UserService from "../../src/services/User.service.js";
 
 const { testCities, newTestCity } = testFavouriteCities;
+const { users, newUser } = testUsers;
 
 describe("Integration Tests", () => {
-  let favouriteCityServer, database, request, favouriteCityService;
+  let server, database, request, favouriteCityService, userService;
 
   before(async () => {
     Config.load();
     const { PORT, HOST, DB_URI } = process.env;
     favouriteCityService = new FavouriteCityService();
+    userService = new UserService();
+
+    const userController = new UserController(userService);
     const favouriteCityController = new FavouriteCityController(
       favouriteCityService
     );
+    const userRoutes = new UserRoutes(userController, "/user");
     const favouriteCityRoutes = new FavouriteCityRoutes(
       favouriteCityController,
       "/favouriteCities"
     );
-    favouriteCityServer = new Server(PORT, HOST, favouriteCityRoutes);
+    server = new Server(PORT, HOST, [favouriteCityRoutes, userRoutes]);
     database = new Database(DB_URI);
-    favouriteCityServer.start();
+    server.start();
+
     await database.connect();
-    request = supertest(favouriteCityServer.getApp());
+    request = supertest(server.getApp());
   });
 
   after(async () => {
-    await favouriteCityServer.close();
+    await server.close();
     await database.close();
   });
 
   beforeEach(async () => {
     try {
       await FavouriteCity.deleteMany();
+      await User.deleteMany();
     } catch (e) {
       console.log(e.message);
       throw new Error();
     }
     try {
       await FavouriteCity.insertMany(testCities);
+      await User.insertMany(users);
     } catch (e) {
       console.log(e.message);
       throw new Error();
     }
   });
 
-  describe("Get request to /favouritecities/getcities", () => {
-    it("should respond with a 200 status code for the path /favouritecities/getcities", async () => {
-      const response = await request.get("/favouritecities/getcities");
-      expect(response.status).to.equal(200);
-    });
-    it("should respond with an array of favourite cities", async () => {
-      const response = await request.get("/favouritecities/getcities");
-      expect(response.body).to.be.an("array");
-    });
-    it("should respond with the right data", async () => {
-      const response = await request.get("/favouritecities/getcities");
-      const responseWithoutId = response.body.map((element) => {
-        const { __v, _id, ...elementNoId } = element;
-        return elementNoId;
+  describe("Favourite City", () => {
+    describe("Get request to /favouritecities/getcities", () => {
+      it("should respond with a 200 status code for the path /favouritecities/getcities", async () => {
+        const response = await request.get("/favouritecities/getcities");
+        expect(response.status).to.equal(200);
       });
-      it("should respond an empty array if there are no favourite cities", async () => {
-        await FavouriteCity.deleteMany();
+      it("should respond with an array of favourite cities", async () => {
+        const response = await request.get("/favouritecities/getcities");
+        expect(response.body).to.be.an("array");
+      });
+      it("should respond with the right data", async () => {
+        const response = await request.get("/favouritecities/getcities");
+        const responseWithoutId = response.body.map((element) => {
+          const { __v, _id, ...elementNoId } = element;
+          return elementNoId;
+        });
+        it("should respond an empty array if there are no favourite cities", async () => {
+          await FavouriteCity.deleteMany();
+          const response = await request.get("/favouritecities/getcities");
+
+          expect(response.body).to.deep.equal([]);
+          expect(response.body).to.have.length(0);
+        });
+
+        expect(responseWithoutId).to.deep.equal(testCities);
+      });
+      it("should should respond with a 500 status code when there is an error", async () => {
+        const stub = sinon.stub(favouriteCityService, "getCities");
+        stub.throws(new Error("Test error"));
         const response = await request.get("/favouritecities/getcities");
 
-        expect(response.body).to.deep.equal([]);
-        expect(response.body).to.have.length(0);
+        expect(response.status).to.equal(500);
+
+        stub.restore();
       });
-
-      expect(responseWithoutId).to.deep.equal(testCities);
     });
-    it("should should respond with a 500 status code when there is an error", async () => {
-      const stub = sinon.stub(favouriteCityService, "getCities");
-      stub.throws(new Error("Test error"));
-      const response = await request.get("/favouritecities/getcities");
 
-      expect(response.status).to.equal(500);
+    describe("Post request to /favouritecities", () => {
+      it("should respond with a 201 status code for the path /favouritecities", async () => {
+        const response = await request
+          .post("/favouritecities")
+          .send(newTestCity);
+        expect(response.status).to.equal(201);
+      });
+      it("should contain city in the response body when adding a new city", async () => {
+        const response = await request
+          .post("/favouritecities")
+          .send(newTestCity);
+        expect(response.body).to.include(newTestCity);
+      });
+      it("should add a new city to the database", async () => {
+        await request.post("/favouritecities").send(newTestCity);
+        const response = await request.get("/favouritecities/getcities");
+        const addedCity = response.body.find(
+          (city) => city.cityName === newTestCity.cityName
+        );
+        expect(addedCity).to.include(newTestCity);
+      });
+      it("should respond with a 500 status code if there is an error", async () => {
+        const stub = sinon.stub(favouriteCityService, "addCity");
+        stub.throws(new Error("Test error"));
+        const response = await request
+          .post("/favouritecities")
+          .send(newTestCity);
+        expect(response.status).to.equal(500);
+        stub.restore();
+      });
+      it("should respond with a 400 status when posting a city with cityName missing", async () => {
+        const invalidCity = { ...newTestCity, cityName: null };
 
-      stub.restore();
+        const response = await request
+          .post("/favouritecities")
+          .send(invalidCity);
+        expect(response.status).to.equal(400);
+      });
+      it("should respond with a 400 status when posting a city with cityName that is not a string", async () => {
+        const invalidCity = { ...newTestCity, cityName: 22 };
+
+        const response = await request
+          .post("/favouritecities")
+          .send(invalidCity);
+        expect(response.status).to.equal(400);
+      });
+      it("should respond with a 400 status when posting a city with cityName that is an empty string", async () => {
+        const invalidCity = { ...newTestCity, cityName: "" };
+
+        const response = await request
+          .post("/favouritecities")
+          .send(invalidCity);
+        expect(response.status).to.equal(400);
+      });
+      it("should respond with a 400 status when posting a city with cityCountry missing", async () => {
+        const invalidCity = { ...newTestCity, cityCountry: null };
+
+        const response = await request
+          .post("/favouritecities")
+          .send(invalidCity);
+        expect(response.status).to.equal(400);
+      });
+      it("should respond with a 400 status when posting a city with cityCountry that is not a string", async () => {
+        const invalidCity = { ...newTestCity, cityCountry: 22 };
+
+        const response = await request
+          .post("/favouritecities")
+          .send(invalidCity);
+        expect(response.status).to.equal(400);
+      });
+      it("should respond with a 400 status when posting a city with cityCountry that is a empty string", async () => {
+        const invalidCity = { ...newTestCity, cityCountry: 22 };
+
+        const response = await request
+          .post("/favouritecities")
+          .send(invalidCity);
+        expect(response.status).to.equal(400);
+      });
     });
   });
 
-  describe("Post request to /favouritecities", () => {
-    it("should respond with a 201 status code for the path /favouritecities", async () => {
-      const response = await request.post("/favouritecities").send(newTestCity);
-      expect(response.status).to.equal(201);
-    });
-    it("should contain city in the response body when adding a new city", async () => {
-      const response = await request.post("/favouritecities").send(newTestCity);
-      expect(response.body).to.include(newTestCity);
-    });
-    it("should add a new city to the database", async () => {
-      await request.post("/favouritecities").send(newTestCity);
-      const response = await request.get("/favouritecities/getcities");
-      const addedCity = response.body.find(
-        (city) => city.cityName === newTestCity.cityName
-      );
-      expect(addedCity).to.include(newTestCity);
-    });
-    it("should respond with a 500 status code if there is an error", async () => {
-      const stub = sinon.stub(favouriteCityService, "addCity");
-      stub.throws(new Error("Test error"));
-      const response = await request.post("/favouritecities").send(newTestCity);
-      expect(response.status).to.equal(500);
-      stub.restore();
-    });
-    it("should respond with a 400 status when posting a city with cityName missing", async () => {
-      const invalidCity = { ...newTestCity, cityName: null };
-
-      const response = await request.post("/favouritecities").send(invalidCity);
-      expect(response.status).to.equal(400);
-    });
-    it("should respond with a 400 status when posting a city with cityName that is not a string", async () => {
-      const invalidCity = { ...newTestCity, cityName: 22 };
-
-      const response = await request.post("/favouritecities").send(invalidCity);
-      expect(response.status).to.equal(400);
-    });
-    it("should respond with a 400 status when posting a city with cityName that is an empty string", async () => {
-      const invalidCity = { ...newTestCity, cityName: "" };
-
-      const response = await request.post("/favouritecities").send(invalidCity);
-      expect(response.status).to.equal(400);
-    });
-    it("should respond with a 400 status when posting a city with cityCountry missing", async () => {
-      const invalidCity = { ...newTestCity, cityCountry: null };
-
-      const response = await request.post("/favouritecities").send(invalidCity);
-      expect(response.status).to.equal(400);
-    });
-    it("should respond with a 400 status when posting a city with cityCountry that is not a string", async () => {
-      const invalidCity = { ...newTestCity, cityCountry: 22 };
-
-      const response = await request.post("/favouritecities").send(invalidCity);
-      expect(response.status).to.equal(400);
-    });
-    it("should respond with a 400 status when posting a city with cityCountry that is a empty string", async () => {
-      const invalidCity = { ...newTestCity, cityCountry: 22 };
-
-      const response = await request.post("/favouritecities").send(invalidCity);
-      expect(response.status).to.equal(400);
+  describe("User", () => {
+    describe("Get request to /user/getUsers ", () => {
+      it("should respond with a 200 status code for the path /user/getUsers", async () => {
+        // Arrange
+        // Act
+        const response = await request.get("/user/getUsers");
+        // Assert
+        expect(response.status).to.equal(200);
+      });
+      it("should respond with an array", async () => {
+        // Arrange
+        // Act
+        const response = await request.get("/user/getUsers");
+        // Assert
+        expect(response.body).to.be.an("array");
+      });
+      it("should respond with an array with users", async () => {
+        // Arrange
+        const response = await request.get("/user/getUsers");
+        const formattedResponse = response.body.map((user) => {
+          const { _id, __v, ...formattedUser } = user;
+          return formattedUser;
+        });
+        // Act
+        // Assert
+        expect(formattedResponse).to.deep.equal(users);
+      });
+      it("should respond with an empty array when there are no users", async () => {
+        // Arrange
+        await User.deleteMany();
+        const response = await request.get("/user/getUsers");
+        // Act
+        // Assert
+        expect(response.body).to.deep.equal([]);
+      });
+      it("should respond with 500 status code when there is an error", async () => {
+        // Arrange
+        const stub = sinon.stub(userService, "getUsers");
+        stub.throws(new Error("Test Error"));
+        const response = await request.get("/user/getUsers");
+        // Act
+        // Assert
+        expect(response.status).to.equal(500);
+        stub.restore();
+      });
     });
   });
 });

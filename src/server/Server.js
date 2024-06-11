@@ -4,15 +4,15 @@ export default class Server {
   #app;
   #host;
   #port;
-  #router;
+  #routers;
   #server;
 
-  constructor(port, host, router) {
+  constructor(port, host, routers) {
     this.#app = express();
     this.#port = port;
     this.#host = host;
     this.#server = null;
-    this.#router = router;
+    this.#routers = routers;
   }
 
   getApp = () => this.#app;
@@ -22,10 +22,9 @@ export default class Server {
       console.log(`Server is listening on http://${this.#host}:${this.#port}`);
     });
     this.#app.use(express.json());
-    this.#app.use(
-      this.#router.getRouteStartingPoint(),
-      this.#router.getRouter()
-    );
+    this.#routers.forEach((router) => {
+      this.#app.use(router.getRouteStartingPoint(), router.getRouter());
+    });
   }
 
   close() {
