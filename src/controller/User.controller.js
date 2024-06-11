@@ -15,6 +15,17 @@ export default class UserController {
     }
   };
 
+  findUserByEmail = async (req, res) => {
+    const { body } = req;
+    try {
+      !body && res.status(400).json({ message: "invalid request body" });
+      const user = await this.#service.findUserByEmail();
+      !user && res.status(404).json({ message: "user not found" });
+    } catch (e) {
+      res.status(500).json({ message: e.message });
+    }
+  };
+
   addUser = async (req, res) => {
     const invalidError = new Error("Invalid User");
     try {

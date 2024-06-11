@@ -5,6 +5,10 @@ export default class UserService {
     return await User.find({});
   };
 
+  findUserByEmail = async (email) => {
+    return await User.findOne({ email: email });
+  };
+
   addUser = async (newUser) => {
     let user;
     try {

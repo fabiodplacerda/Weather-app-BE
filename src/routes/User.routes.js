@@ -19,6 +19,10 @@ export default class UserRoutes {
 
   #initializeRoutes = () => {
     this.#router.get("/getUsers", this.#controller.getUsers);
+    this.#router.get(
+      "/findUserByEmail/:email",
+      this.#controller.findUserByEmail
+    );
     this.#router.post("/", UserValidator.validate(), this.#controller.addUser);
     this.#router.put(
       "/:id",

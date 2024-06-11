@@ -25,8 +25,10 @@ describe("UserService tests", () => {
       const testUser = [
         {
           id: "1",
-          cityName: " test city name",
-          cityCountry: "test city country",
+          email: "user2@example.com",
+          name: "User Two",
+          password: "password2",
+          favoriteCities: [],
         },
       ];
       const findStub = sinon.stub(User, "find");
@@ -49,6 +51,36 @@ describe("UserService tests", () => {
       expect(result).to.equal(testUser);
 
       findStub.restore();
+    });
+  });
+
+  describe("findUserByEmail", () => {
+    it("should call findOne on the model", async () => {
+      // Arrange
+      const findOneStub = sinon.stub(User, "findOne");
+      findOneStub.resolves({});
+      // Act
+      await userService.findUserByEmail();
+      // Assert
+      expect(findOneStub.calledOnce).to.be.true;
+      findOneStub.restore();
+    });
+    it("should call return a user", async () => {
+      // Arrange
+      const testUser = {
+        id: "1",
+        email: "user2@example.com",
+        name: "User Two",
+        password: "password2",
+        favoriteCities: [],
+      };
+      const findOneStub = sinon.stub(User, "findOne");
+      findOneStub.resolves(testUser);
+      // Act
+      const result = await userService.findUserByEmail();
+      // Assert
+      expect(result).to.equal(testUser);
+      findOneStub.restore();
     });
   });
 
