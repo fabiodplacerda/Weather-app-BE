@@ -23,7 +23,6 @@ export default class FavouriteCityController {
       if (!newCity._id) throw invalidError;
       res.status(201).json(newCity);
     } catch (e) {
-      // console.log(e);
       if (e === invalidError) {
         res.status(400).json({ message: e.message });
       }
