@@ -8,6 +8,7 @@ describe("UserController tests", () => {
   beforeEach(() => {
     userService = {
       getUsers: sinon.stub(),
+      addUser: sinon.stub(),
       editUser: sinon.stub(),
     };
     userController = new UserController(userService);
@@ -60,6 +61,50 @@ describe("UserController tests", () => {
       // Assert
       expect(res.json.calledWith({ message: testError.message })).to.be.true;
       expect(res.status.calledWith(500)).to.be.true;
+    });
+  });
+  describe("addUser tests", () => {
+    it("should add a new user", async () => {
+      const newUser = {
+        _id: "1",
+        email: "user32@example.com",
+        name: "User Three Two",
+        password: "password22",
+      };
+      userService.addUser.resolves(newUser);
+
+      await userController.addUser(req, res);
+
+      expect(res.status.calledWith(201)).to.be.true;
+      expect(res.json.calledWith(newUser)).to.be.true;
+    });
+
+    it("should send a 500 response if addUser returns a user without an id", async () => {
+      const newUser = {
+        email: "user32@example.com",
+        name: "User Three Two",
+        password: "password22",
+        favoriteCities: [],
+      };
+      userService.addUser.resolves(newUser);
+
+      await userController.addUser(req, res);
+
+      expect(res.status.calledWith(500)).to.be.true;
+      expect(
+        res.json.calledWith({
+          message: "Invalid User",
+        })
+      ).to.be.true;
+    });
+
+    it("should send a 400 response if body is null", async () => {
+      req.body = null;
+
+      await userController.addUser(req, res);
+
+      expect(res.status.calledWith(400)).to.be.true;
+      expect(res.json.calledWith({ message: "Invalid User" })).to.be.true;
     });
   });
   describe("editUser tests", () => {

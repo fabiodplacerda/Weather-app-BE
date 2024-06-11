@@ -20,7 +20,7 @@ export default class UserController {
     try {
       if (!req.body) throw invalidError;
       const newUser = await this.#service.addUser(req.body);
-      if (!newUser.id) throw invalidError;
+      if (!newUser._id) throw invalidError;
       res.status(201).json(newUser);
     } catch (e) {
       if (e === invalidError) {
