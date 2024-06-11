@@ -230,6 +230,7 @@ describe("Integration Tests", () => {
         // Act
         // Assert
         expect(response.body).to.deep.equal([]);
+        await User.insertMany(users);
       });
       it("should respond with 500 status code when there is an error", async () => {
         // Arrange
@@ -240,6 +241,130 @@ describe("Integration Tests", () => {
         // Assert
         expect(response.status).to.equal(500);
         stub.restore();
+      });
+    });
+    describe("Post request to /user", () => {
+      it("should respond with a 201 for a post request", async () => {
+        // Arrange
+        // Act
+        const response = await request.post("/user").send(newUser);
+        // Assert
+        expect(response.status).to.equal(201);
+      });
+      it("should send the new user in the body when adding a new user", async () => {
+        // Arrange
+        // Act
+        const response = await request.post("/user").send(newUser);
+        // Assert
+        expect(response.body).to.include({
+          name: newUser.name,
+          email: newUser.email,
+          password: newUser.password,
+        });
+        expect(response.body.favouriteCities).to.deep.equal(
+          newUser.favouriteCities
+        );
+      });
+      it("should add a new user to the database", async () => {
+        // Arrange
+        await request.post("/user").send(newUser);
+        const response = await request.get("/user/getUsers");
+        // Act
+        const addedUser = response.body.find(
+          (user) => user.name === newUser.name
+        );
+        // Assert
+        expect(addedUser).to.include({
+          name: newUser.name,
+          email: newUser.email,
+          password: newUser.password,
+        });
+        expect(addedUser.favouriteCities).to.deep.equal(
+          newUser.favouriteCities
+        );
+      });
+      it("should respond with a 500 status code if there is an error", async () => {
+        // Arrange
+        const stub = sinon.stub(userService, "addUser");
+        stub.throws(new Error("test error"));
+        // Act
+        const response = await request.post("/user").send(newUser);
+        // Assert
+        expect(response.status).to.equal(500);
+
+        stub.restore();
+      });
+      it("should respond with a 400 status code if email is missing", async () => {
+        // Arrange
+        const invalidUser = { ...newUser, email: null };
+        // Act
+        const response = await request.post("/user").send(invalidUser);
+        // Assert
+        expect(response.status).to.equal(400);
+      });
+      it("should respond with a 400 status code if email is not a string", async () => {
+        // Arrange
+        const invalidUser = { ...newUser, email: 22 };
+        // Act
+        const response = await request.post("/user").send(invalidUser);
+        // Assert
+        expect(response.status).to.equal(400);
+      });
+      it("should respond with a 400 status code if email is an empty string", async () => {
+        // Arrange
+        const invalidUser = { ...newUser, email: "" };
+        // Act
+        const response = await request.post("/user").send(invalidUser);
+        // Assert
+        expect(response.status).to.equal(400);
+      });
+      it("should respond with a 400 status code if name is missing", async () => {
+        // Arrange
+        const invalidUser = { ...newUser, name: null };
+        // Act
+        const response = await request.post("/user").send(invalidUser);
+        // Assert
+        expect(response.status).to.equal(400);
+      });
+      it("should respond with a 400 status code if name is not a string", async () => {
+        // Arrange
+        const invalidUser = { ...newUser, name: 22 };
+        // Act
+        const response = await request.post("/user").send(invalidUser);
+        // Assert
+        expect(response.status).to.equal(400);
+      });
+      it("should respond with a 400 status code if name is an empty string", async () => {
+        // Arrange
+        const invalidUser = { ...newUser, name: "" };
+        // Act
+        const response = await request.post("/user").send(invalidUser);
+        // Assert
+        expect(response.status).to.equal(400);
+      });
+      it("should respond with a 400 status code if password is missing", async () => {
+        // Arrange
+        const invalidUser = { ...newUser, password: null };
+        // Act
+        const response = await request.post("/user").send(invalidUser);
+        // Assert
+        expect(response.status).to.equal(400);
+      });
+      it("should respond with a 400 status code if password is not a string", async () => {
+        // Arrange
+        const invalidUser = { ...newUser, password: 22 };
+        // Act
+        const response = await request.post("/user").send(invalidUser);
+        // Assert
+        expect(response.status).to.equal(400);
+      });
+      it("should respond with a 400 status code if password is an empty string", async () => {
+        // Arrange
+        const invalidUser = { ...newUser, password: "" };
+        // Act
+        const response = await request.post("/user").send(invalidUser);
+        // Assert
+        expect(response.status).to.equal(400);
       });
     });
   });

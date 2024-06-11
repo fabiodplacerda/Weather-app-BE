@@ -1,5 +1,6 @@
 import { Router } from "express";
 import FavouriteCityController from "../controller/FavouriteCity.controller.js";
+import UserValidator from "../middleware/User.validator.js";
 
 export default class UserRoutes {
   #controller;
@@ -18,6 +19,7 @@ export default class UserRoutes {
 
   #initializeRoutes = () => {
     this.#router.get("/getUsers", this.#controller.getUsers);
+    this.#router.post("/", UserValidator.validate(), this.#controller.addUser);
   };
 
   getRouter() {
