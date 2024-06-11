@@ -26,6 +26,7 @@ import UserController from "../../src/controller/User.controller.js";
 // Services
 import FavouriteCityService from "../../src/services/FavouriteCity.service.js";
 import UserService from "../../src/services/User.service.js";
+import { response } from "express";
 
 const { testCities, newTestCity } = testFavouriteCities;
 const { users, newUser } = testUsers;
@@ -197,7 +198,7 @@ describe("Integration Tests", () => {
   });
 
   describe("User", () => {
-    describe("Get request to /user/getUsers ", () => {
+    describe("GET request to /user/getUsers ", () => {
       it("should respond with a 200 status code for the path /user/getUsers", async () => {
         // Arrange
         // Act
@@ -216,7 +217,7 @@ describe("Integration Tests", () => {
         // Arrange
         const response = await request.get("/user/getUsers");
         const formattedResponse = response.body.map((user) => {
-          const { _id, __v, ...formattedUser } = user;
+          const { __v, ...formattedUser } = user;
           return formattedUser;
         });
         // Act
@@ -243,7 +244,7 @@ describe("Integration Tests", () => {
         stub.restore();
       });
     });
-    describe("Post request to /user", () => {
+    describe("POST request to /user", () => {
       it("should respond with a 201 for a post request", async () => {
         // Arrange
         // Act
@@ -365,6 +366,53 @@ describe("Integration Tests", () => {
         const response = await request.post("/user").send(invalidUser);
         // Assert
         expect(response.status).to.equal(400);
+      });
+    });
+    describe("PUT request to /user/:id", () => {
+      const testUser = users[0];
+      const testId = users[0]._id;
+      const updatedUser = {
+        ...testUser,
+        password: "newPassword",
+      };
+
+      it("should respond with a 200 status code for PUT /:id", async () => {
+        const response = await request.put(`/user/${testId}`).send(updatedUser);
+        expect(response.status).to.equal(202);
+      });
+      it("should respond with the updated user", async () => {
+        const response = await request.put(`/user/${testId}`).send(updatedUser);
+        const responseWithoutV = response.body;
+        delete responseWithoutV.__v;
+        expect(responseWithoutV).to.deep.equal(updatedUser);
+      });
+      it("should update the user in the database", async () => {
+        await request.put(`/user/${testId}`).send(updatedUser);
+        const response = await request.get("/user/getUsers");
+        const responseWithoutV = response.body.map((user) => {
+          const { __v, ...formattedUser } = user;
+          return formattedUser;
+        });
+        expect(responseWithoutV).to.deep.include(updatedUser);
+      });
+      it("should respond with a 404 status code when a user does not exit", async () => {
+        const noExistingId = "5ca7177e0774a968c209a928";
+        const response = await request
+          .put(`/user/${noExistingId}`)
+          .send(updatedUser);
+        expect(response.status).to.equal(404);
+      });
+      it("should respond with a 400 status code when one of the updated fields is invalid", async () => {
+        const response = await request
+          .put(`/user/${testId}`)
+          .send({ ...updatedUser, name: "" });
+        expect(response.status).to.equal(400);
+      });
+      it("should respond with a 500 status code when there is an error", async () => {
+        const stub = sinon.stub(userService, "editUser");
+        stub.throws(new Error("test error"));
+        const response = await request.put(`/user/${testId}`).send(updatedUser);
+        expect(response.status).to.equal(500);
       });
     });
   });

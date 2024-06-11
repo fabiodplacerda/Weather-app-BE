@@ -14,4 +14,10 @@ export default class UserService {
     }
     return await user.save();
   };
+
+  editUser = async (userId, updatedUser) => {
+    return await User.findOneAndUpdate({ _id: userId }, updatedUser, {
+      new: true,
+    });
+  };
 }

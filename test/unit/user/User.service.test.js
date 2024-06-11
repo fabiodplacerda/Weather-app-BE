@@ -8,45 +8,133 @@ describe("UserService tests", () => {
   beforeEach(() => {
     userService = new UserService();
   });
-  it("should call find on the User model", async () => {
-    // Arrange
-    const findStub = sinon.stub(User, "find");
-    findStub.resolves([]);
-    // Act
-    await userService.getUsers();
-    // Assert
-    expect(findStub.calledOnce).to.be.true;
+  describe("getUsers", () => {
+    it("should call find on the User model", async () => {
+      // Arrange
+      const findStub = sinon.stub(User, "find");
+      findStub.resolves([]);
+      // Act
+      await userService.getUsers();
+      // Assert
+      expect(findStub.calledOnce).to.be.true;
 
-    findStub.restore();
+      findStub.restore();
+    });
+    it("should return the users", async () => {
+      // Arrange
+      const testUser = [
+        {
+          id: "1",
+          cityName: " test city name",
+          cityCountry: "test city country",
+        },
+      ];
+      const findStub = sinon.stub(User, "find");
+      findStub.resolves(testUser);
+      // Act
+      const result = await userService.getUsers();
+      // Assert
+      expect(result).to.equal(testUser);
+
+      findStub.restore();
+    });
+    it("should return an empty array when there are no users", async () => {
+      // Arrange
+      const testUser = [];
+      const findStub = sinon.stub(User, "find");
+      findStub.resolves(testUser);
+      // Act
+      const result = await userService.getUsers();
+      // Assert
+      expect(result).to.equal(testUser);
+
+      findStub.restore();
+    });
   });
-  it("should return the users", async () => {
-    // Arrange
-    const testUser = [
-      {
-        id: "1",
-        cityName: " test city name",
-        cityCountry: "test city country",
-      },
-    ];
-    const findStub = sinon.stub(User, "find");
-    findStub.resolves(testUser);
-    // Act
-    const result = await userService.getUsers();
-    // Assert
-    expect(result).to.equal(testUser);
 
-    findStub.restore();
+  describe("addUsers tests", () => {
+    it("should call save and return the result when a valid newUser is added", async () => {
+      const newUser = {
+        _id: "1",
+        email: "user2@example.com",
+        name: "User Two",
+        password: "password2",
+      };
+      const saveStub = sinon.stub(User.prototype, "save");
+      saveStub.returns(newUser);
+
+      const result = await userService.addUser(newUser);
+
+      expect(result).to.equal(newUser);
+
+      saveStub.restore();
+    });
+
+    it("should throw an error when save fails is added", async () => {
+      const newUser = {
+        _id: "1",
+        email: "user2@example.com",
+        name: "User Two",
+        password: "",
+      };
+      const error = new Error("Invalid User");
+      const saveStub = sinon.stub(User.prototype, "save");
+      saveStub.throws(error);
+
+      try {
+        await userService.addUser(newUser);
+        assert.fail("Expected error was not thrown");
+      } catch (err) {
+        expect(err).to.equal(error);
+      }
+
+      saveStub.restore();
+    });
   });
-  it("should return an empty array when there are no users", async () => {
-    // Arrange
-    const testUser = [];
-    const findStub = sinon.stub(User, "find");
-    findStub.resolves(testUser);
-    // Act
-    const result = await userService.getUsers();
-    // Assert
-    expect(result).to.equal(testUser);
+  describe("editUser tests", () => {
+    it("should call findOneAndUpdate", async () => {
+      // Arrange
+      const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
+      findOneAndUpdateStub.resolves([]);
+      // Act
+      await userService.editUser();
+      // Assert
+      expect(findOneAndUpdateStub.calledOnce).to.be.true;
 
-    findStub.restore();
+      findOneAndUpdateStub.restore();
+    });
+    it("should call return the update user when password is valid", async () => {
+      // Arrange
+      const id = "1";
+      const newPassword = "password22";
+      const updatedUser = {
+        email: "user2@example.com",
+        name: "User Two",
+        password: newPassword,
+      };
+      const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
+      findOneAndUpdateStub.resolves(updatedUser);
+      // Act
+      const result = await userService.editUser(id, newPassword);
+      // Assert
+      expect(result).to.equal(updatedUser);
+
+      findOneAndUpdateStub.restore();
+    });
+    it("should return null when and invalid id is provided", async () => {
+      // Arrange
+      const id = "invalid";
+      const newPassword = "password22";
+      const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
+      findOneAndUpdateStub.resolves(null);
+      const findStub = sinon.stub(User, "find");
+      findStub.returns(null);
+      // Act
+      const result = await userService.editUser(id, newPassword);
+      // Assert
+      expect(result).to.null;
+
+      findOneAndUpdateStub.restore();
+    });
   });
 });

@@ -20,6 +20,11 @@ export default class UserRoutes {
   #initializeRoutes = () => {
     this.#router.get("/getUsers", this.#controller.getUsers);
     this.#router.post("/", UserValidator.validate(), this.#controller.addUser);
+    this.#router.put(
+      "/:id",
+      UserValidator.validate(),
+      this.#controller.editUser
+    );
   };
 
   getRouter() {

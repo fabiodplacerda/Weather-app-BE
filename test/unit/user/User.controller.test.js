@@ -8,8 +8,13 @@ describe("UserController tests", () => {
   beforeEach(() => {
     userService = {
       getUsers: sinon.stub(),
+      editUser: sinon.stub(),
     };
     userController = new UserController(userService);
+    req = {
+      body: {},
+      params: { id: "1" },
+    };
     res = {
       json: sinon.spy(),
       status: sinon.stub().returnsThis(),
@@ -55,6 +60,44 @@ describe("UserController tests", () => {
       // Assert
       expect(res.json.calledWith({ message: testError.message })).to.be.true;
       expect(res.status.calledWith(500)).to.be.true;
+    });
+  });
+  describe("editUser tests", () => {
+    it("should edit a user ", async () => {
+      const updateUser = {
+        email: "user3@example.com",
+        name: "User Three",
+        password: "password3",
+        favoriteCities: [
+          "66637931557ca62365e759fb",
+          "66637931557ca62365e759fc",
+        ],
+      };
+      userService.editUser.resolves(updateUser);
+      await userController.editUser(req, res);
+      expect(res.status.calledWith(202)).to.be.true;
+      expect(res.json.calledWith(updateUser)).to.be.true;
+    });
+    it("should send a 500 status code if user returns null ", async () => {
+      userService.editUser.resolves(null);
+      await userController.editUser(req, res);
+      expect(res.status.calledWith(404)).to.be.true;
+      expect(res.json.calledWith({ message: "user not found" })).to.be.true;
+    });
+    it("should send a 400 status code if id is null ", async () => {
+      req.params.id = null;
+      await userController.editUser(req, res);
+      expect(res.status.calledWith(400)).to.be.true;
+      expect(res.json.calledWith({ message: "invalid id" })).to.be.true;
+    });
+    it("should send a 400 status code if body is null", async () => {
+      req.body = null;
+
+      await userController.editUser(req, res);
+
+      expect(res.status.calledWith(400)).to.be.true;
+      expect(res.json.calledWith({ message: "invalid request body" })).to.be
+        .true;
     });
   });
 });
