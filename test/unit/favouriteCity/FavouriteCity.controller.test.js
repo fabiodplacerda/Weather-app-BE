@@ -9,10 +9,14 @@ describe("FavouriteCityController", () => {
   beforeEach(() => {
     favouriteCitiesService = {
       getCities: sinon.stub(),
+      addCity: sinon.stub(),
     };
     favouriteCityController = new FavouriteCityController(
       favouriteCitiesService
     );
+    req = {
+      body: {},
+    };
     res = {
       json: sinon.spy(),
       status: sinon.stub().returnsThis(),
@@ -58,6 +62,38 @@ describe("FavouriteCityController", () => {
       // Arrange
       expect(res.status.calledWith(500)).to.be.true;
       expect(res.json.calledWith({ message: testError.message })).to.be.true;
+    });
+  });
+  describe("addCity tests", () => {
+    it("should add a new city", async () => {
+      const newCity = { _id: "1", cityName: "Paris", cityCountry: "France" };
+      favouriteCitiesService.addCity.resolves(newCity);
+
+      await favouriteCityController.addCity(req, res);
+
+      expect(res.status.calledWith(201)).to.be.true;
+      expect(res.json.calledWith(newCity)).to.be.true;
+    });
+    it("should send a 500 response if addCity returns a city without an id", async () => {
+      const newCity = { cityName: "Paris", cityCountry: "France" };
+      favouriteCitiesService.addCity.resolves(newCity);
+
+      await favouriteCityController.addCity(req, res);
+
+      expect(res.status.calledWith(500)).to.be.true;
+      expect(
+        res.json.calledWith({
+          message: "Invalid City",
+        })
+      ).to.be.true;
+    });
+    it("should send a 400 response if body is null", async () => {
+      req.body = null;
+
+      await favouriteCityController.addCity(req, res);
+
+      expect(res.status.calledWith(500)).to.be.true;
+      expect(res.json.calledWith({ message: "Invalid City" })).to.be.true;
     });
   });
 });
