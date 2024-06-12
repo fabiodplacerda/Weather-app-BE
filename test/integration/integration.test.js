@@ -244,6 +244,43 @@ describe("Integration Tests", () => {
         stub.restore();
       });
     });
+    describe("GET request to /user/findUserByEmail/:email", () => {
+      it("should respond with a 200 status code when a used is found", async () => {
+        const testEmail = "user1@example.com";
+        const response = await request.get(
+          `/user/findUserByEmail/${testEmail}`
+        );
+        expect(response.status).to.equal(200);
+      });
+      it("should respond back with an user if user was found", async () => {
+        const testEmail = "user1@example.com";
+        const response = await request.get(
+          `/user/findUserByEmail/${testEmail}`
+        );
+        expect(response.body).to.deep.equal({ ...users[0], __v: 0 });
+      });
+      it("should respond with a 404 if user was found", async () => {
+        const testEmail = "testEmail@example.com";
+        const response = await request.get(
+          `/user/findUserByEmail/${testEmail}`
+        );
+        expect(response.status).to.equal(404);
+        expect(response.body).to.deep.equal({ message: "user not found" });
+      });
+      it("should respond with 500 status code when there is an error", async () => {
+        const stub = sinon.stub(userService, "findUserByEmail");
+        stub.throws(new Error("Test error"));
+
+        const testEmail = "testEmail@example.com";
+        const response = await request.get(
+          `/user/findUserByEmail/${testEmail}`
+        );
+        expect(response.status).to.equal(500);
+        expect(response.body).to.deep.equal({ message: "Test error" });
+
+        stub.restore();
+      });
+    });
     describe("POST request to /user", () => {
       it("should respond with a 201 for a post request", async () => {
         // Arrange

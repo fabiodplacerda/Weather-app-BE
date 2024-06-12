@@ -16,11 +16,16 @@ export default class UserController {
   };
 
   findUserByEmail = async (req, res) => {
-    const { body } = req;
+    const { email } = req.params;
+
     try {
-      !body && res.status(400).json({ message: "invalid request body" });
-      const user = await this.#service.findUserByEmail();
+      !email &&
+        res
+          .status(400)
+          .json({ message: "Invalid request: 'email' parameter is missing" });
+      const user = await this.#service.findUserByEmail(email);
       !user && res.status(404).json({ message: "user not found" });
+      res.json(user);
     } catch (e) {
       res.status(500).json({ message: e.message });
     }

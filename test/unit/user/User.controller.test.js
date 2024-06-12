@@ -8,6 +8,7 @@ describe("UserController tests", () => {
   beforeEach(() => {
     userService = {
       getUsers: sinon.stub(),
+      findUserByEmail: sinon.stub(),
       addUser: sinon.stub(),
       editUser: sinon.stub(),
     };
@@ -60,6 +61,56 @@ describe("UserController tests", () => {
       await userController.getUsers(req, res);
       // Assert
       expect(res.json.calledWith({ message: testError.message })).to.be.true;
+      expect(res.status.calledWith(500)).to.be.true;
+    });
+  });
+  describe("findUserByEmail tests", () => {
+    it("should get one user by email and return it as a json", async () => {
+      const testUser = {
+        id: 1,
+        email: "user1@example.com",
+        name: "User One",
+        password: "password1",
+        favoriteCities: [],
+      };
+
+      userService.findUserByEmail.resolves(testUser);
+
+      await userController.findUserByEmail(req, res);
+
+      expect(res.json.calledWith(testUser)).to.be.true;
+    });
+    it("should send a 404 response if no user was sent back from the service", async () => {
+      const testUser = null;
+
+      userService.findUserByEmail.resolves(testUser);
+
+      await userController.findUserByEmail(req, res);
+
+      expect(res.status.calledWith(404)).to.be.true;
+      expect(res.json.calledWith({ message: "user not found" })).to.be.true;
+    });
+    it("should send a 400 response if there is no body", async () => {
+      req.params.email = null;
+
+      userService.findUserByEmail.resolves();
+
+      await userController.findUserByEmail(req, res);
+
+      expect(res.status.calledWith(400)).to.be.true;
+      expect(
+        res.json.calledWith({
+          message: "Invalid request: 'email' parameter is missing",
+        })
+      ).to.be.true;
+    });
+    it("should send a 500 response if findUserByEmail service throws an error", async () => {
+      const testError = new Error();
+
+      userService.findUserByEmail.rejects(testError);
+
+      await userController.findUserByEmail(req, res);
+
       expect(res.status.calledWith(500)).to.be.true;
     });
   });
