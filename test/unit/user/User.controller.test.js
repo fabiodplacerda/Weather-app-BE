@@ -73,6 +73,7 @@ describe("UserController tests", () => {
         password: "password1",
         favoriteCities: [],
       };
+      req.params.email = testUser.email;
 
       userService.findUserByEmail.resolves(testUser);
 
@@ -81,16 +82,15 @@ describe("UserController tests", () => {
       expect(res.json.calledWith(testUser)).to.be.true;
     });
     it("should send a 404 response if no user was sent back from the service", async () => {
-      const testUser = null;
-
-      userService.findUserByEmail.resolves(testUser);
+      req.params.email = "test@example.com";
+      userService.findUserByEmail.resolves(null);
 
       await userController.findUserByEmail(req, res);
 
       expect(res.status.calledWith(404)).to.be.true;
       expect(res.json.calledWith({ message: "user not found" })).to.be.true;
     });
-    it("should send a 400 response if there is no body", async () => {
+    it("should send a 400 response if there is no email in the params", async () => {
       req.params.email = null;
 
       userService.findUserByEmail.resolves();
@@ -106,6 +106,7 @@ describe("UserController tests", () => {
     });
     it("should send a 500 response if findUserByEmail service throws an error", async () => {
       const testError = new Error();
+      req.params.email = "test@example.com";
 
       userService.findUserByEmail.rejects(testError);
 
