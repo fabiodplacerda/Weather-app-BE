@@ -5,6 +5,7 @@
   "main": "index.js",
   "type": "module",
   "scripts": {
+    "seed": "NODE_ENV=dev node seed/seed-db.js",
     "prod": "NODE_ENV=prod nodemon src/index.js",
     "start": "NODE_ENV=dev nodemon src/index.js",
     "test": "NODE_ENV=test nodemon --exec 'mocha --timeout 10000 --exit --recursive'",
