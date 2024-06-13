@@ -123,13 +123,13 @@ describe("UserService tests", () => {
       saveStub.restore();
     });
   });
-  describe("editUser tests", () => {
+  describe("updatePassword tests", () => {
     it("should call findOneAndUpdate", async () => {
       // Arrange
       const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
       findOneAndUpdateStub.resolves([]);
       // Act
-      await userService.editUser();
+      await userService.updatePassword();
       // Assert
       expect(findOneAndUpdateStub.calledOnce).to.be.true;
 
@@ -138,7 +138,7 @@ describe("UserService tests", () => {
     it("should call return the update user when password is valid", async () => {
       // Arrange
       const id = "1";
-      const newPassword = "password22";
+      const newPassword = "Password22!";
       const updatedUser = {
         email: "user2@example.com",
         name: "User Two",
@@ -147,7 +147,7 @@ describe("UserService tests", () => {
       const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
       findOneAndUpdateStub.resolves(updatedUser);
       // Act
-      const result = await userService.editUser(id, newPassword);
+      const result = await userService.updatePassword(id, newPassword);
       // Assert
       expect(result).to.equal(updatedUser);
 
@@ -156,13 +156,13 @@ describe("UserService tests", () => {
     it("should return null when and invalid id is provided", async () => {
       // Arrange
       const id = "invalid";
-      const newPassword = "password22";
+      const newPassword = "Password22!";
       const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
       findOneAndUpdateStub.resolves(null);
       const findStub = sinon.stub(User, "find");
       findStub.returns(null);
       // Act
-      const result = await userService.editUser(id, newPassword);
+      const result = await userService.updatePassword(id, newPassword);
       // Assert
       expect(result).to.null;
 

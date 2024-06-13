@@ -50,7 +50,7 @@ export default class UserController {
     }
   };
 
-  editUser = async (req, res) => {
+  updatePassword = async (req, res) => {
     const { id } = req.params;
     const { body } = req;
 
@@ -58,7 +58,7 @@ export default class UserController {
       !id && res.status(400).json({ message: "invalid id" });
       !body && res.status(400).json({ message: "invalid request body" });
 
-      const updatedUser = await this.#service.editUser(id, body);
+      const updatedUser = await this.#service.updatePassword(id, body.password);
 
       !updatedUser && res.status(404).json({ message: "user not found" });
 

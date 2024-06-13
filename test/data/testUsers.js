@@ -5,28 +5,40 @@ const testUsers = {
       email: "user1@example.com",
       name: "User One",
       password: "Password1!",
-      favouriteCities: ["66637931557ca62365e759f7", "66637931557ca62365e759f8"],
+      favouriteCities: [
+        { city: "New York", country: "USA" },
+        { city: "Paris", country: "France" },
+      ],
     },
     {
       _id: "66637a57557ca62365e759ff",
       email: "user2@example.com",
       name: "User Two",
       password: "Password2!",
-      favouriteCities: ["66637931557ca62365e759f9", "66637931557ca62365e759fa"],
+      favouriteCities: [
+        { city: "London", country: "UK" },
+        { city: "Tokyo", country: "Japan" },
+      ],
     },
     {
       _id: "66637a57557ca62365e75a00",
       email: "user3@example.com",
       name: "User Three",
       password: "Password3!",
-      favouriteCities: ["66637931557ca62365e759fb", "66637931557ca62365e759fc"],
+      favouriteCities: [
+        { city: "Sydney", country: "Australia" },
+        { city: "Berlin", country: "Germany" },
+      ],
     },
   ],
   newUser: {
     email: "user4@example.com",
     name: "User 4",
     password: "newPassword1!",
-    favouriteCities: ["66637931557ca62365e759fc", "66637931557ca62365e759f9"],
+    favouriteCities: [
+      { city: "Berlin", country: "Germany" },
+      { city: "Tokyo", country: "Japan" },
+    ],
   },
 };
 

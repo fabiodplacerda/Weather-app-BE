@@ -24,10 +24,10 @@ export default class UserRoutes {
       this.#controller.findUserByEmail
     );
     this.#router.post("/", UserValidator.validate(), this.#controller.addUser);
-    this.#router.put(
-      "/:id",
-      UserValidator.validate(),
-      this.#controller.editUser
+    this.#router.patch(
+      "/updatePassword/:id",
+      UserValidator.validatePassword(),
+      this.#controller.updatePassword
     );
   };
 

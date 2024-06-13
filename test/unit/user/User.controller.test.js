@@ -10,7 +10,7 @@ describe("UserController tests", () => {
       getUsers: sinon.stub(),
       findUserByEmail: sinon.stub(),
       addUser: sinon.stub(),
-      editUser: sinon.stub(),
+      updatePassword: sinon.stub(),
     };
     userController = new UserController(userService);
     req = {
@@ -165,32 +165,29 @@ describe("UserController tests", () => {
         email: "user3@example.com",
         name: "User Three",
         password: "password3",
-        favoriteCities: [
-          "66637931557ca62365e759fb",
-          "66637931557ca62365e759fc",
-        ],
+        favoriteCities: [],
       };
-      userService.editUser.resolves(updateUser);
-      await userController.editUser(req, res);
+      userService.updatePassword.resolves(updateUser);
+      await userController.updatePassword(req, res);
       expect(res.status.calledWith(202)).to.be.true;
       expect(res.json.calledWith(updateUser)).to.be.true;
     });
     it("should send a 500 status code if user returns null ", async () => {
-      userService.editUser.resolves(null);
-      await userController.editUser(req, res);
+      userService.updatePassword.resolves(null);
+      await userController.updatePassword(req, res);
       expect(res.status.calledWith(404)).to.be.true;
       expect(res.json.calledWith({ message: "user not found" })).to.be.true;
     });
     it("should send a 400 status code if id is null ", async () => {
       req.params.id = null;
-      await userController.editUser(req, res);
+      await userController.updatePassword(req, res);
       expect(res.status.calledWith(400)).to.be.true;
       expect(res.json.calledWith({ message: "invalid id" })).to.be.true;
     });
     it("should send a 400 status code if body is null", async () => {
       req.body = null;
 
-      await userController.editUser(req, res);
+      await userController.updatePassword(req, res);
 
       expect(res.status.calledWith(400)).to.be.true;
       expect(res.json.calledWith({ message: "invalid request body" })).to.be

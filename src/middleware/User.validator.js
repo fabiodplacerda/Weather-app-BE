@@ -41,6 +41,30 @@ export default class UserValidator {
     }
   };
 
+  static validatePassword = () => {
+    try {
+      return [
+        expressValidator
+          .body("password")
+          .notEmpty()
+          .isString()
+          .withMessage("password is required")
+          .isLength({ min: 8 })
+          .withMessage("password must be at least 8 characters long")
+          .matches(/(?=.*[A-Z])/)
+          .withMessage("password must contain at least one uppercase letter")
+          .matches(/(?=.*\d)/)
+          .withMessage("password must contain at least one number")
+          .matches(/(?=.*[@$!%*?&])/)
+          .withMessage("password must contain at least one special character"),
+        UserValidator.handleValidationErrors,
+      ];
+    } catch (e) {
+      console.log(e);
+      return [];
+    }
+  };
+
   static handleValidationErrors = (req, res, next) => {
     const errors = expressValidator.validationResult(req);
     if (!errors.isEmpty()) {

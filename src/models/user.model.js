@@ -4,7 +4,15 @@ const userSchema = new Schema({
   email: { type: String, required: true },
   name: { type: String, required: true },
   password: { type: String, required: true },
-  favouriteCities: { type: Array, default: [] },
+  favouriteCities: {
+    type: [
+      {
+        city: { type: String, required: true },
+        country: { type: String, required: true },
+      },
+    ],
+    default: [],
+  },
 });
 
 const User = model("User", userSchema);

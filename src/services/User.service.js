@@ -19,9 +19,17 @@ export default class UserService {
     return await user.save();
   };
 
-  editUser = async (userId, updatedUser) => {
-    return await User.findOneAndUpdate({ _id: userId }, updatedUser, {
-      new: true,
-    });
+  updatePassword = async (userId, updatedPassword) => {
+    try {
+      const updatedUser = await User.findOneAndUpdate(
+        { _id: userId },
+        { password: updatedPassword },
+        { new: true }
+      );
+      return updatedUser;
+    } catch (e) {
+      console.log("Error updating password");
+      return e;
+    }
   };
 }

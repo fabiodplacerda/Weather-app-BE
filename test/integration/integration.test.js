@@ -1,5 +1,5 @@
 import supertest from "supertest";
-import { expect, use } from "chai";
+import { expect } from "chai";
 import sinon from "sinon";
 
 // Server
@@ -217,8 +217,11 @@ describe("Integration Tests", () => {
         // Arrange
         const response = await request.get("/user/getUsers");
         const formattedResponse = response.body.map((user) => {
-          const { __v, ...formattedUser } = user;
-          return formattedUser;
+          const { __v, favouriteCities, ...formattedUser } = user;
+          const formattedCities = favouriteCities.map(
+            ({ _id, ...city }) => city
+          );
+          return { ...formattedUser, favouriteCities: formattedCities };
         });
         // Act
         // Assert
@@ -257,7 +260,16 @@ describe("Integration Tests", () => {
         const response = await request.get(
           `/user/findUserByEmail/${testEmail}`
         );
-        expect(response.body).to.deep.equal({ ...users[0], __v: 0 });
+        const { body } = response;
+        const { favouriteCities } = body;
+
+        const formattedFavourites = favouriteCities.map((city) => {
+          const { _id, ...cityWithoutId } = city;
+          return cityWithoutId;
+        });
+        expect({ ...body, favouriteCities: formattedFavourites }).to.deep.equal(
+          { ...users[0], __v: 0 }
+        );
       });
       it("should respond with a 404 if user was found", async () => {
         const testEmail = "testEmail@example.com";
@@ -293,33 +305,42 @@ describe("Integration Tests", () => {
         // Arrange
         // Act
         const response = await request.post("/user").send(newUser);
+        const { body } = response;
+        const formattedCities = body.favouriteCities.map((city) => {
+          const { _id, ...cityWithoutV } = city;
+          return cityWithoutV;
+        });
         // Assert
-        expect(response.body).to.include({
+        expect(body).to.include({
           name: newUser.name,
           email: newUser.email,
           password: newUser.password,
         });
-        expect(response.body.favouriteCities).to.deep.equal(
-          newUser.favouriteCities
-        );
+
+        expect(formattedCities).to.deep.equal(newUser.favouriteCities);
       });
       it("should add a new user to the database", async () => {
         // Arrange
         await request.post("/user").send(newUser);
         const response = await request.get("/user/getUsers");
+        const { body } = response;
+
         // Act
         const addedUser = response.body.find(
           (user) => user.name === newUser.name
         );
+        const formattedCities = addedUser.favouriteCities.map((city) => {
+          const { _id, ...cityWithoutV } = city;
+          return cityWithoutV;
+        });
+
         // Assert
         expect(addedUser).to.include({
           name: newUser.name,
           email: newUser.email,
           password: newUser.password,
         });
-        expect(addedUser.favouriteCities).to.deep.equal(
-          newUser.favouriteCities
-        );
+        expect(formattedCities).to.deep.equal(newUser.favouriteCities);
       });
       it("should respond with a 500 status code if there is an error", async () => {
         // Arrange
@@ -405,50 +426,74 @@ describe("Integration Tests", () => {
         expect(response.status).to.equal(400);
       });
     });
-    describe("PUT request to /user/:id", () => {
+    describe("PATCH request to /user/updatePassword/:id", () => {
       const testUser = users[0];
       const testId = users[0]._id;
+      const newPassword = { password: "newPassword1!" };
       const updatedUser = {
         ...testUser,
         password: "newPassword1!",
       };
 
-      it("should respond with a 200 status code for PUT /:id", async () => {
-        const response = await request.put(`/user/${testId}`).send(updatedUser);
+      it("should respond with a 202 status code for PUT /:id", async () => {
+        const response = await request
+          .patch(`/user/updatePassword/${testId}`)
+          .send(newPassword);
         expect(response.status).to.equal(202);
       });
       it("should respond with the updated user", async () => {
-        const response = await request.put(`/user/${testId}`).send(updatedUser);
-        const responseWithoutV = response.body;
+        const response = await request
+          .patch(`/user/updatePassword/${testId}`)
+          .send(newPassword);
+
+        const { body } = response;
+
+        const formattedCities = body.favouriteCities.map((city) => {
+          const { _id, ...cityWithoutV } = city;
+          return cityWithoutV;
+        });
+        const responseWithoutV = body;
         delete responseWithoutV.__v;
-        expect(responseWithoutV).to.deep.equal(updatedUser);
+        expect({
+          ...responseWithoutV,
+          favouriteCities: formattedCities,
+        }).to.deep.equal(updatedUser);
       });
       it("should update the user in the database", async () => {
-        await request.put(`/user/${testId}`).send(updatedUser);
+        await request.patch(`/user/updatePassword/${testId}`).send(newPassword);
         const response = await request.get("/user/getUsers");
-        const responseWithoutV = response.body.map((user) => {
-          const { __v, ...formattedUser } = user;
-          return formattedUser;
+
+        const formattedResponse = response.body.map((user) => {
+          const { __v, favouriteCities, ...formattedUser } = user;
+
+          const formattedCities = favouriteCities.map(
+            ({ _id, ...city }) => city
+          );
+          return { ...formattedUser, favouriteCities: formattedCities };
         });
-        expect(responseWithoutV).to.deep.include(updatedUser);
+        expect(formattedResponse).to.deep.include(updatedUser);
       });
       it("should respond with a 404 status code when a user does not exit", async () => {
-        const noExistingId = "5ca7177e0774a968c209a928";
+        const nonExistingId = "5ca7177e0774a968c209a928";
         const response = await request
-          .put(`/user/${noExistingId}`)
-          .send(updatedUser);
+          .patch(`/user/updatePassword/${nonExistingId}`)
+          .send(newPassword);
+
         expect(response.status).to.equal(404);
       });
-      it("should respond with a 400 status code when one of the updated fields is invalid", async () => {
+      it("should respond with a 400 status code when password is invalid", async () => {
         const response = await request
-          .put(`/user/${testId}`)
-          .send({ ...updatedUser, name: "" });
+          .patch(`/user/updatePassword/${testId}`)
+          .send({ password: "" });
+
         expect(response.status).to.equal(400);
       });
       it("should respond with a 500 status code when there is an error", async () => {
-        const stub = sinon.stub(userService, "editUser");
+        const stub = sinon.stub(userService, "updatePassword");
         stub.throws(new Error("test error"));
-        const response = await request.put(`/user/${testId}`).send(updatedUser);
+        const response = await request
+          .patch(`/user/updatePassword/${testId}`)
+          .send(newPassword);
         expect(response.status).to.equal(500);
       });
     });
