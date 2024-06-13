@@ -410,7 +410,7 @@ describe("Integration Tests", () => {
       const testId = users[0]._id;
       const updatedUser = {
         ...testUser,
-        password: "newPassword",
+        password: "newPassword1!",
       };
 
       it("should respond with a 200 status code for PUT /:id", async () => {
