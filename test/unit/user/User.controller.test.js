@@ -11,6 +11,7 @@ describe("UserController tests", () => {
       findUserByEmail: sinon.stub(),
       addUser: sinon.stub(),
       updatePassword: sinon.stub(),
+      updateFavouriteCities: sinon.stub(),
     };
     userController = new UserController(userService);
     req = {
@@ -159,8 +160,8 @@ describe("UserController tests", () => {
       expect(res.json.calledWith({ message: "Invalid User" })).to.be.true;
     });
   });
-  describe("editUser tests", () => {
-    it("should edit a user ", async () => {
+  describe("updatePassword tests", () => {
+    it("should update a user password", async () => {
       const updateUser = {
         email: "user3@example.com",
         name: "User Three",
@@ -189,6 +190,33 @@ describe("UserController tests", () => {
 
       await userController.updatePassword(req, res);
 
+      expect(res.status.calledWith(400)).to.be.true;
+      expect(res.json.calledWith({ message: "invalid request body" })).to.be
+        .true;
+    });
+  });
+  describe("updateFavouriteCities tests", () => {
+    it("should update a user's favourite cities", async () => {
+      const updatedUser = {
+        email: "test@example.com",
+        name: "test",
+        password: "TestPassword1!",
+        favouriteCities: { city: "testCity", country: "testCountry" },
+      };
+      userService.updateFavouriteCities.resolves(updatedUser);
+      await userController.updateFavouriteCities(req, res);
+      expect(res.status.calledWith(202)).to.be.true;
+      expect(res.json.calledWith(updatedUser)).to.be.true;
+    });
+    it("should send a 400 status code if ID is null", async () => {
+      req.params.id = null;
+      await userController.updateFavouriteCities(req, res);
+      expect(res.status.calledWith(400)).to.be.true;
+      expect(res.json.calledWith({ message: "invalid id" })).to.be.true;
+    });
+    it("should send a 400 status code if body is null", async () => {
+      req.body = null;
+      await userController.updateFavouriteCities(req, res);
       expect(res.status.calledWith(400)).to.be.true;
       expect(res.json.calledWith({ message: "invalid request body" })).to.be
         .true;

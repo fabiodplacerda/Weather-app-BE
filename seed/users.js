@@ -5,8 +5,18 @@ const users = [
     name: "John Doe",
     password: "JohnPassword1!",
     favouriteCities: [
-      { city: "New York", country: "USA" },
-      { city: "Paris", country: "France" },
+      {
+        city: "New York",
+        country: "USA",
+        latitude: 40.7128,
+        longitude: -74.006,
+      },
+      {
+        city: "Paris",
+        country: "France",
+        latitude: 48.8566,
+        longitude: 2.3522,
+      },
     ],
   },
   {
@@ -15,8 +25,13 @@ const users = [
     name: "Jane Smith",
     password: "JanePassword1!",
     favouriteCities: [
-      { city: "London", country: "UK" },
-      { city: "Tokyo", country: "Japan" },
+      { city: "London", country: "UK", latitude: 51.5074, longitude: -0.1278 },
+      {
+        city: "Tokyo",
+        country: "Japan",
+        latitude: 35.6895,
+        longitude: 139.6917,
+      },
     ],
   },
   {
@@ -32,8 +47,13 @@ const users = [
     name: "Sarah Brown",
     password: "SarahPass1!",
     favouriteCities: [
-      { city: "Barcelona", country: "Spain" },
-      { city: "Rome", country: "Italy" },
+      {
+        city: "Barcelona",
+        country: "Spain",
+        latitude: 41.3851,
+        longitude: 2.1734,
+      },
+      { city: "Rome", country: "Italy", latitude: 41.9028, longitude: 12.4964 },
     ],
   },
   {
@@ -42,8 +62,18 @@ const users = [
     name: "David Wilson",
     password: "DavidPass1!",
     favouriteCities: [
-      { city: "Toronto", country: "Canada" },
-      { city: "Moscow", country: "Russia" },
+      {
+        city: "Toronto",
+        country: "Canada",
+        latitude: 43.6511,
+        longitude: -79.3837,
+      },
+      {
+        city: "Moscow",
+        country: "Russia",
+        latitude: 55.7558,
+        longitude: 37.6173,
+      },
     ],
   },
   {
@@ -52,8 +82,13 @@ const users = [
     name: "Emma Davis",
     password: "EmmaPass1!",
     favouriteCities: [
-      { city: "Dubai", country: "UAE" },
-      { city: "Seoul", country: "South Korea" },
+      { city: "Dubai", country: "UAE", latitude: 25.2048, longitude: 55.2708 },
+      {
+        city: "Seoul",
+        country: "South Korea",
+        latitude: 37.5665,
+        longitude: 126.978,
+      },
     ],
   },
 ];

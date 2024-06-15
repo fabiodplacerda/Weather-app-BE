@@ -29,6 +29,11 @@ export default class UserRoutes {
       UserValidator.validatePassword(),
       this.#controller.updatePassword
     );
+    this.#router.patch(
+      "/updateFavouriteCities/:id",
+      UserValidator.validateFavouriteCities(),
+      this.#controller.updateFavouriteCities
+    );
   };
 
   getRouter() {

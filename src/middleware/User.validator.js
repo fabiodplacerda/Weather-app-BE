@@ -65,6 +65,38 @@ export default class UserValidator {
     }
   };
 
+  static validateFavouriteCities = () => {
+    try {
+      return [
+        expressValidator.body("_id").optional().isMongoId(),
+        expressValidator
+          .body("newFavouriteCity.city")
+          .notEmpty()
+          .isString()
+          .withMessage("City is required and must be a string"),
+        expressValidator
+          .body("newFavouriteCity.country")
+          .notEmpty()
+          .isString()
+          .withMessage("Country is required and must be a string"),
+        expressValidator
+          .body("newFavouriteCity.latitude")
+          .notEmpty()
+          .isNumeric()
+          .withMessage("Latitude is required and must be a number"),
+        expressValidator
+          .body("newFavouriteCity.longitude")
+          .notEmpty()
+          .isNumeric()
+          .withMessage("Longitude is required and must be a number"),
+        UserValidator.handleValidationErrors,
+      ];
+    } catch (e) {
+      console.log(e);
+      return [];
+    }
+  };
+
   static handleValidationErrors = (req, res, next) => {
     const errors = expressValidator.validationResult(req);
     if (!errors.isEmpty()) {

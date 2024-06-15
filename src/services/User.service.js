@@ -13,23 +13,35 @@ export default class UserService {
     let user;
     try {
       user = new User(newUser);
+      return await user.save();
     } catch (e) {
       throw new Error("Invalid User");
     }
-    return await user.save();
   };
 
-  updatePassword = async (userId, updatedPassword) => {
+  updatePassword = async (userId, newPassword) => {
     try {
       const updatedUser = await User.findOneAndUpdate(
         { _id: userId },
-        { password: updatedPassword },
+        { password: newPassword },
         { new: true }
       );
       return updatedUser;
     } catch (e) {
-      console.log("Error updating password");
-      return e;
+      throw new Error(`Error updating password: ${e.message}`);
+    }
+  };
+
+  updateFavouriteCities = async (userId, newFavouriteCity) => {
+    try {
+      const updatedUser = await User.findOneAndUpdate(
+        { _id: userId },
+        { $push: { favouriteCities: newFavouriteCity } },
+        { new: true }
+      );
+      return updatedUser;
+    } catch (e) {
+      throw new Error(`Error updating favourite cities: ${e.message}`);
     }
   };
 }

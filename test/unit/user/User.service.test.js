@@ -102,7 +102,7 @@ describe("UserService tests", () => {
       saveStub.restore();
     });
 
-    it("should throw an error when save fails is added", async () => {
+    it("should throw an error when save fails", async () => {
       const newUser = {
         _id: "1",
         email: "user2@example.com",
@@ -117,7 +117,7 @@ describe("UserService tests", () => {
         await userService.addUser(newUser);
         assert.fail("Expected error was not thrown");
       } catch (err) {
-        expect(err).to.equal(error);
+        expect(err).to.deep.equal(error);
       }
 
       saveStub.restore();
@@ -135,7 +135,7 @@ describe("UserService tests", () => {
 
       findOneAndUpdateStub.restore();
     });
-    it("should call return the update user when password is valid", async () => {
+    it("should return the update user when password is valid", async () => {
       // Arrange
       const id = "1";
       const newPassword = "Password22!";
@@ -166,6 +166,81 @@ describe("UserService tests", () => {
       // Assert
       expect(result).to.null;
 
+      findOneAndUpdateStub.restore();
+      findStub.restore();
+    });
+    it("should return throw an error when updating fails", async () => {
+      // Arrange
+      const testId = "66637a57557ca62365e759fe";
+      const newPassword = "NewPassword1!";
+      const testError = new Error("Test error");
+      const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
+      findOneAndUpdateStub.throws(testError);
+
+      // Act
+      // Assert
+      try {
+        await userService.updatePassword(testId, newPassword);
+        assert.fail("Expected error was not thrown");
+      } catch (e) {
+        expect(e.message).to.equal(
+          `Error updating password: ${testError.message}`
+        );
+      }
+
+      findOneAndUpdateStub.restore();
+    });
+  });
+  describe("UpdateFavouriteCities tests ", () => {
+    it("should call findOneAndUpdate", async () => {
+      const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
+      findOneAndUpdateStub.resolves({});
+
+      await userService.updateFavouriteCities();
+
+      expect(findOneAndUpdateStub.calledOnce).to.be.true;
+
+      findOneAndUpdateStub.restore();
+    });
+    it("should return the updated user when favouriteCities has been updated successfully", async () => {
+      const id = "1";
+      const newCity = {
+        favouriteCity: { city: "testCity", country: "testCountry" },
+      };
+      const updatedUser = {
+        email: "test@example.com",
+        name: "test",
+        password: "TestPassword1!",
+        favouriteCities: [newCity],
+      };
+
+      const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
+      findOneAndUpdateStub.resolves(updatedUser);
+
+      const result = await userService.updateFavouriteCities(id, newCity);
+
+      expect(result).to.equal(updatedUser);
+
+      findOneAndUpdateStub.restore();
+    });
+    it("should return error when user cities fails to update", async () => {
+      const id = "66637a57557ca62365e759fe";
+      const error = new Error("test error");
+      const newCity = {
+        favouriteCity: { city: "testCity", country: "testCountry" },
+      };
+
+      const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
+      findOneAndUpdateStub.throws(error);
+
+      try {
+        await userService.updateFavouriteCities(id, newCity);
+        assert.fail("Expected error was not thrown");
+      } catch (err) {
+        expect(err.message).to.equal(
+          `Error updating favourite cities: ${error.message}`
+        );
+      }
       findOneAndUpdateStub.restore();
     });
   });

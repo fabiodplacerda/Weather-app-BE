@@ -26,7 +26,6 @@ import UserController from "../../src/controller/User.controller.js";
 // Services
 import FavouriteCityService from "../../src/services/FavouriteCity.service.js";
 import UserService from "../../src/services/User.service.js";
-import { response } from "express";
 
 const { testCities, newTestCity } = testFavouriteCities;
 const { users, newUser } = testUsers;
@@ -435,7 +434,7 @@ describe("Integration Tests", () => {
         password: "newPassword1!",
       };
 
-      it("should respond with a 202 status code for PUT /:id", async () => {
+      it("should respond with a 202 status code for PATCH /user/updatePassword/:id", async () => {
         const response = await request
           .patch(`/user/updatePassword/${testId}`)
           .send(newPassword);
@@ -494,6 +493,108 @@ describe("Integration Tests", () => {
         const response = await request
           .patch(`/user/updatePassword/${testId}`)
           .send(newPassword);
+        expect(response.status).to.equal(500);
+      });
+    });
+    describe("PATCH request to /user/updateFavouriteCities/:id", () => {
+      const testUser = users[0];
+      const testId = users[0]._id;
+      const newCity = {
+        newFavouriteCity: {
+          city: "Sydney",
+          country: "Australia",
+          latitude: -33.8688,
+          longitude: 151.2093,
+        },
+      };
+      const updatedUser = {
+        ...testUser,
+        favouriteCities: [
+          ...testUser.favouriteCities,
+          newCity.newFavouriteCity,
+        ],
+      };
+
+      it("should respond with a 202 status code for PATCH the path /user/updateFavouriteCities/:id", async () => {
+        const response = await request
+          .patch(`/user/updateFavouriteCities/${testId}`)
+          .send(newCity);
+
+        expect(response.status).to.equal(202);
+      });
+      it("should respond with an updated user", async () => {
+        const response = await request
+          .patch(`/user/updateFavouriteCities/${testId}`)
+          .send(newCity);
+
+        const { body } = response;
+        const { __v, ...formattedResponse } = body;
+
+        const formattedCities = body.favouriteCities.map((city) => {
+          const { _id, ...cityWithoutId } = city;
+          return cityWithoutId;
+        });
+
+        expect({
+          ...formattedResponse,
+          favouriteCities: formattedCities,
+        }).to.deep.equal(updatedUser);
+      });
+      it("should update the user in the database", async () => {
+        const addedUser = await request
+          .patch(`/user/updateFavouriteCities/${testId}`)
+          .send(newCity);
+        const { name } = addedUser.body;
+        const response = await request.get("/user/getUsers");
+        const { body } = response;
+
+        const findUser = body.find((user) => user.name === name);
+
+        expect(body).to.deep.include(findUser);
+      });
+      it("should update the user in the database when cities array is empty", async () => {
+        const updatedUser3 = {
+          ...users[3],
+          favouriteCities: [newCity.newFavouriteCity],
+        };
+        await request
+          .patch(`/user/updateFavouriteCities/${users[3]._id}`)
+          .send(newCity);
+        const response = await request.get("/user/getUsers");
+        const bodyResponse = response.body[3];
+        const formattedCities = bodyResponse.favouriteCities.map((city) => {
+          const { _id, ...cityWithoutId } = city;
+          return cityWithoutId;
+        });
+
+        expect({
+          ...bodyResponse,
+          favouriteCities: formattedCities,
+        }).to.deep.equal({ ...updatedUser3, __v: 0 });
+      });
+      it("should respond with a 400 status code if new city has invalid fields", async () => {
+        const invalidNewCity = { newFavouriteCity: { city: "", country: "" } };
+        const response = await request
+          .patch(`/user/updateFavouriteCities/${testId}`)
+          .send(invalidNewCity);
+
+        expect(response.status).to.equal(400);
+      });
+      it("should respond with a 404 status code id doesn't exists", async () => {
+        const inexistentId = "66637a57557ca62365e75a02";
+        const response = await request
+          .patch(`/user/updateFavouriteCities/${inexistentId}`)
+          .send(newCity);
+
+        expect(response.status).to.equal(404);
+        expect(response.body).to.deep.equal({ message: "user not found" });
+      });
+      it("should respond with a 500 status code when there is an error", async () => {
+        const stub = sinon.stub(userService, "updateFavouriteCities");
+        stub.throws(new Error("test error"));
+        const response = await request
+          .patch(`/user/updateFavouriteCities/${testId}`)
+          .send(newCity);
         expect(response.status).to.equal(500);
       });
     });

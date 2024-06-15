@@ -9,6 +9,8 @@ const userSchema = new Schema({
       {
         city: { type: String, required: true },
         country: { type: String, required: true },
+        latitude: { type: Number, required: true },
+        longitude: { type: Number, required: true },
       },
     ],
     default: [],
