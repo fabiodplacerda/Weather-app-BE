@@ -5,15 +5,15 @@ export default class Server {
   #app;
   #host;
   #port;
-  #routers;
+  #router;
   #server;
 
-  constructor(port, host, routers) {
+  constructor(port, host, router) {
     this.#app = express();
     this.#port = port;
     this.#host = host;
     this.#server = null;
-    this.#routers = routers;
+    this.#router = router;
   }
 
   getApp = () => this.#app;
@@ -24,9 +24,10 @@ export default class Server {
     });
     this.#app.use(express.json());
     this.#app.use(cors());
-    this.#routers.forEach((router) => {
-      this.#app.use(router.getRouteStartingPoint(), router.getRouter());
-    });
+    this.#app.use(
+      this.#router.getRouteStartingPoint(),
+      this.#router.getRouter()
+    );
   }
 
   close() {

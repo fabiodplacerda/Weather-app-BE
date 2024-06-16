@@ -1,5 +1,4 @@
 import { Router } from "express";
-import FavouriteCityController from "../controller/FavouriteCity.controller.js";
 import UserValidator from "../middleware/User.validator.js";
 
 export default class UserRoutes {
