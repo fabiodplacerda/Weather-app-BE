@@ -22,6 +22,7 @@ export default class UserRoutes {
       "/findUserByEmail/:email",
       this.#controller.findUserByEmail
     );
+    this.#router.post("/login", this.#controller.login);
     this.#router.post("/", UserValidator.validate(), this.#controller.addUser);
     this.#router.patch(
       "/updatePassword/:id",

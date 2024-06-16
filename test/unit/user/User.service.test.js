@@ -83,6 +83,48 @@ describe("UserService tests", () => {
       findOneStub.restore();
     });
   });
+  describe("Login", () => {
+    it("should call findOne on the model", async () => {
+      // Arrange
+      const findOneStub = sinon.stub(User, "findOne");
+      findOneStub.resolves({});
+      // Act
+      await userService.login();
+      // Assert
+      expect(findOneStub.calledOnce).to.be.true;
+      findOneStub.restore();
+    });
+    it("should call return a user if password if correct and user exists", async () => {
+      // Arrange
+      const testUser = {
+        id: "1",
+        email: "user2@example.com",
+        name: "User Two",
+        password: "password2",
+        favoriteCities: [],
+      };
+      const findOneStub = sinon.stub(User, "findOne");
+      findOneStub.resolves(testUser);
+      // Act
+      const result = await userService.login(testUser.email, testUser.password);
+      // Assert
+      expect(result).to.equal(testUser);
+      findOneStub.restore();
+    });
+    it("should return null if email was not found or password doesn't match", async () => {
+      // Arrange
+      const findOneStub = sinon.stub(User, "findOne");
+      findOneStub.resolves(null);
+      // Act
+      const result = await userService.login(
+        "test@test.com",
+        "inexistentPassword"
+      );
+      // Assert
+      expect(result).to.equal(null);
+      findOneStub.restore();
+    });
+  });
 
   describe("addUsers tests", () => {
     it("should call save and return the result when a valid newUser is added", async () => {

@@ -162,6 +162,80 @@ describe("Integration Tests", () => {
         stub.restore();
       });
     });
+    describe("GET request to /user/login", () => {
+      const testUser = users[0];
+
+      it("should respond with a 200 status code when a email was found and password matches", async () => {
+        const response = await request
+          .post(`/user/login`)
+          .send({ email: testUser.email, password: testUser.password });
+        expect(response.status).to.equal(200);
+      });
+      it("should respond back with an user if email and password matches to a user", async () => {
+        const response = await request
+          .post(`/user/login`)
+          .send({ email: testUser.email, password: testUser.password });
+        const { body } = response;
+        const { favouriteCities } = body;
+
+        const formattedFavourites = favouriteCities.map((city) => {
+          const { _id, ...cityWithoutId } = city;
+          return cityWithoutId;
+        });
+        expect({ ...body, favouriteCities: formattedFavourites }).to.deep.equal(
+          { ...users[0], __v: 0 }
+        );
+      });
+      it("should respond with a 404 if email was not found", async () => {
+        const testEmail = "testEmail@example.com";
+        const response = await request
+          .post(`/user/login`)
+          .send({ email: testEmail, password: testUser.password });
+        expect(response.status).to.equal(404);
+        expect(response.body).to.deep.equal({
+          message: "email or password are incorrect",
+        });
+      });
+      it("should respond with a 404 if password doesn't match", async () => {
+        const password = "password1234!";
+        const response = await request
+          .post(`/user/login`)
+          .send({ email: testUser.email, password: password });
+        expect(response.status).to.equal(404);
+        expect(response.body).to.deep.equal({
+          message: "email or password are incorrect",
+        });
+      });
+      it("should respond with a 400 if email wasn't provided", async () => {
+        const response = await request
+          .post(`/user/login`)
+          .send({ email: null, password: "Password1213!" });
+        expect(response.status).to.equal(400);
+        expect(response.body).to.deep.equal({
+          message: "Invalid request: body parameters are missing",
+        });
+      });
+      it("should respond with a 400 if password wasn't provided", async () => {
+        const response = await request
+          .post(`/user/login`)
+          .send({ email: "test@email.com", password: null });
+        expect(response.status).to.equal(400);
+        expect(response.body).to.deep.equal({
+          message: "Invalid request: body parameters are missing",
+        });
+      });
+      it("should respond with 500 status code when there is an error", async () => {
+        const stub = sinon.stub(userService, "login");
+        stub.throws(new Error("Test error"));
+        const response = await request
+          .post(`/user/login`)
+          .send({ email: testUser.email, password: testUser.password });
+        expect(response.status).to.equal(500);
+        expect(response.body).to.deep.equal({ message: "Test error" });
+
+        stub.restore();
+      });
+    });
     describe("POST request to /user", () => {
       it("should respond with a 201 for a post request", async () => {
         // Arrange
@@ -470,7 +544,6 @@ describe("Integration Tests", () => {
     });
     describe("PATCH request to /user/removeFavouriteCity/:id", () => {
       const testUser = users[0];
-      console.log(testUser);
       const testId = users[0]._id;
       const testCityToRemove = {
         cityToRemove: {

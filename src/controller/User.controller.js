@@ -34,6 +34,27 @@ export default class UserController {
       return res.status(500).json({ message: e.message });
     }
   };
+  login = async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+      return res
+        .status(400)
+        .json({ message: "Invalid request: body parameters are missing" });
+    }
+
+    try {
+      const user = await this.#service.login(email, password);
+      if (!user) {
+        return res
+          .status(404)
+          .json({ message: "email or password are incorrect" });
+      }
+      return res.status(200).json(user);
+    } catch (e) {
+      return res.status(500).json({ message: e.message });
+    }
+  };
 
   addUser = async (req, res) => {
     const invalidError = new Error("Invalid User");

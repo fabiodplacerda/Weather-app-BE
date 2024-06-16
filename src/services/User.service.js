@@ -9,6 +9,16 @@ export default class UserService {
     return await User.findOne({ email: email });
   };
 
+  login = async (email, password) => {
+    try {
+      const user = await User.findOne({ email: email });
+      if (!user || user.password !== password) return null;
+      return user;
+    } catch (e) {
+      return e;
+    }
+  };
+
   addUser = async (newUser) => {
     let user;
     try {

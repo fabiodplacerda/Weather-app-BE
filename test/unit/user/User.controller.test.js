@@ -9,6 +9,7 @@ describe("UserController tests", () => {
     userService = {
       getUsers: sinon.stub(),
       findUserByEmail: sinon.stub(),
+      login: sinon.stub(),
       addUser: sinon.stub(),
       updatePassword: sinon.stub(),
       updateFavouriteCities: sinon.stub(),
@@ -113,6 +114,59 @@ describe("UserController tests", () => {
       userService.findUserByEmail.rejects(testError);
 
       await userController.findUserByEmail(req, res);
+
+      expect(res.status.calledWith(500)).to.be.true;
+    });
+  });
+  describe("login tests", () => {
+    it("should return back and user if email and password match", async () => {
+      const testUser = {
+        id: 1,
+        email: "user1@example.com",
+        name: "User One",
+        password: "password1",
+        favoriteCities: [],
+      };
+      req.body = { email: testUser.email, password: testUser.password };
+
+      userService.login.resolves(testUser);
+
+      await userController.login(req, res);
+
+      expect(res.json.calledWith(testUser)).to.be.true;
+    });
+    it("should send a 404 if password or email don't match with any user in the db", async () => {
+      req.body = { email: "test@test.com", password: "password123" };
+      userService.login.resolves(null);
+
+      await userController.login(req, res);
+
+      expect(res.status.calledWith(404)).to.be.true;
+      expect(
+        res.json.calledWith({ message: "email or password are incorrect" })
+      ).to.be.true;
+    });
+    it("should send a 400 response if there is no email or password sent in the body", async () => {
+      req.body = {};
+
+      userService.login.resolves();
+
+      await userController.login(req, res);
+
+      expect(res.status.calledWith(400)).to.be.true;
+      expect(
+        res.json.calledWith({
+          message: "Invalid request: body parameters are missing",
+        })
+      ).to.be.true;
+    });
+    it("should send a 500 response if findUserByEmail service throws an error", async () => {
+      const testError = new Error();
+      req.body = { email: "test@test.com", password: "password123" };
+
+      userService.login.rejects(testError);
+
+      await userController.login(req, res);
 
       expect(res.status.calledWith(500)).to.be.true;
     });
