@@ -88,4 +88,24 @@ export default class UserController {
       res.status(500).json({ message: e.message });
     }
   };
+  removeFavouriteCity = async (req, res) => {
+    const { id } = req.params;
+    const { body } = req;
+
+    try {
+      if (!id) res.status(400).json({ message: "invalid id" });
+      if (!body) res.status(400).json({ message: "invalid request body" });
+
+      const updatedUser = await this.#service.removeFavouriteCity(
+        id,
+        body.cityToRemove
+      );
+
+      if (!updatedUser) res.status(404).json({ message: "user not found" });
+
+      res.status(202).json(updatedUser);
+    } catch (e) {
+      res.status(500).json({ message: e.message });
+    }
+  };
 }

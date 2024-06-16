@@ -12,6 +12,7 @@ describe("UserController tests", () => {
       addUser: sinon.stub(),
       updatePassword: sinon.stub(),
       updateFavouriteCities: sinon.stub(),
+      removeFavouriteCity: sinon.stub(),
     };
     userController = new UserController(userService);
     req = {
@@ -217,6 +218,33 @@ describe("UserController tests", () => {
     it("should send a 400 status code if body is null", async () => {
       req.body = null;
       await userController.updateFavouriteCities(req, res);
+      expect(res.status.calledWith(400)).to.be.true;
+      expect(res.json.calledWith({ message: "invalid request body" })).to.be
+        .true;
+    });
+  });
+  describe("removeFavouriteCity tests", () => {
+    it("should update a user's favourite cities", async () => {
+      const updatedUser = {
+        email: "test@example.com",
+        name: "test",
+        password: "TestPassword1!",
+        favouriteCities: { city: "testCity", country: "testCountry" },
+      };
+      userService.removeFavouriteCity.resolves(updatedUser);
+      await userController.removeFavouriteCity(req, res);
+      expect(res.status.calledWith(202)).to.be.true;
+      expect(res.json.calledWith(updatedUser)).to.be.true;
+    });
+    it("should send a 400 status code if ID is null", async () => {
+      req.params.id = null;
+      await userController.removeFavouriteCity(req, res);
+      expect(res.status.calledWith(400)).to.be.true;
+      expect(res.json.calledWith({ message: "invalid id" })).to.be.true;
+    });
+    it("should send a 400 status code if body is null", async () => {
+      req.body = null;
+      await userController.removeFavouriteCity(req, res);
       expect(res.status.calledWith(400)).to.be.true;
       expect(res.json.calledWith({ message: "invalid request body" })).to.be
         .true;

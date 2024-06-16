@@ -598,5 +598,102 @@ describe("Integration Tests", () => {
         expect(response.status).to.equal(500);
       });
     });
+    describe("PATCH request to /user/removeFavouriteCity/:id", () => {
+      const testUser = users[0];
+      console.log(testUser);
+      const testId = users[0]._id;
+      const testCityToRemove = {
+        cityToRemove: {
+          city: "New York",
+          country: "USA",
+          latitude: 40.7128,
+          longitude: -74.006,
+        },
+      };
+      const updatedUser = {
+        ...testUser,
+        favouriteCities: [
+          {
+            city: "Paris",
+            country: "France",
+            latitude: 48.8566,
+            longitude: 2.3522,
+          },
+        ],
+      };
+
+      it("should respond with a 202 status code for PATCH the path /user/updateFavouriteCities/:id", async () => {
+        const response = await request
+          .patch(`/user/removeFavouriteCity/${testId}`)
+          .send(testCityToRemove);
+
+        expect(response.status).to.equal(202);
+      });
+      it("should respond with an updated user", async () => {
+        const response = await request
+          .patch(`/user/removeFavouriteCity/${testId}`)
+          .send(testCityToRemove);
+
+        const { body } = response;
+        const { __v, ...formattedResponse } = body;
+
+        const formattedCities = body.favouriteCities.map((city) => {
+          const { _id, ...cityWithoutId } = city;
+          return cityWithoutId;
+        });
+
+        expect({
+          ...formattedResponse,
+          favouriteCities: formattedCities,
+        }).to.deep.equal(updatedUser);
+      });
+      it("should update the user in the database", async () => {
+        const addedUser = await request
+          .patch(`/user/removeFavouriteCity/${testId}`)
+          .send(testCityToRemove);
+        const { name } = addedUser.body;
+        const response = await request.get("/user/getUsers");
+        const { body } = response;
+
+        const findUser = body.find((user) => user.name === name);
+
+        expect(body).to.deep.include(findUser);
+      });
+      it("should have no effect when user has has no favourite cities", async () => {
+        const updatedUser3 = users[3];
+
+        await request
+          .patch(`/user/removeFavouriteCity/${updatedUser3._id}`)
+          .send(testCityToRemove);
+        const response = await request.get("/user/getUsers");
+        const bodyResponse = response.body[3];
+        const formattedCities = bodyResponse.favouriteCities.map((city) => {
+          const { _id, ...cityWithoutId } = city;
+          return cityWithoutId;
+        });
+
+        expect({
+          ...bodyResponse,
+          favouriteCities: formattedCities,
+        }).to.deep.equal({ ...updatedUser3, __v: 0 });
+      });
+      it("should respond with a 404 status code id doesn't exists", async () => {
+        const inexistentId = "66637a57557ca62365e75a02";
+        const response = await request
+          .patch(`/user/removeFavouriteCity/${inexistentId}`)
+          .send(testCityToRemove);
+
+        expect(response.status).to.equal(404);
+        expect(response.body).to.deep.equal({ message: "user not found" });
+      });
+      it("should respond with a 500 status code when there is an error", async () => {
+        const stub = sinon.stub(userService, "removeFavouriteCity");
+        stub.throws(new Error("test error"));
+        const response = await request
+          .patch(`/user/removeFavouriteCity/${testId}`)
+          .send(testCityToRemove);
+        expect(response.status).to.equal(500);
+      });
+    });
   });
 });

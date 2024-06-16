@@ -244,4 +244,57 @@ describe("UserService tests", () => {
       findOneAndUpdateStub.restore();
     });
   });
+  describe("removeFavouriteCity tests ", () => {
+    it("should call findOneAndUpdate", async () => {
+      const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
+      findOneAndUpdateStub.resolves({});
+
+      await userService.removeFavouriteCity();
+
+      expect(findOneAndUpdateStub.calledOnce).to.be.true;
+
+      findOneAndUpdateStub.restore();
+    });
+    it("should return the updated user when city has been removed successfully", async () => {
+      const id = "1";
+      const cityToRemove = {
+        favouriteCity: { city: "testCity", country: "testCountry" },
+      };
+      const updatedUser = {
+        email: "test@example.com",
+        name: "test",
+        password: "TestPassword1!",
+        favouriteCities: [],
+      };
+
+      const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
+      findOneAndUpdateStub.resolves(updatedUser);
+
+      const result = await userService.removeFavouriteCity(id, cityToRemove);
+
+      expect(result).to.equal(updatedUser);
+
+      findOneAndUpdateStub.restore();
+    });
+    it("should return error when user cities fails to update", async () => {
+      const id = "66637a57557ca62365e759fe";
+      const error = new Error("test error");
+      const cityToRemove = {
+        favouriteCity: { city: "testCity", country: "testCountry" },
+      };
+
+      const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
+      findOneAndUpdateStub.throws(error);
+
+      try {
+        await userService.removeFavouriteCity(id, cityToRemove);
+        assert.fail("Expected error was not thrown");
+      } catch (err) {
+        expect(err.message).to.equal(
+          `Error removing favourite city: ${error.message}`
+        );
+      }
+      findOneAndUpdateStub.restore();
+    });
+  });
 });

@@ -34,6 +34,10 @@ export default class UserRoutes {
       UserValidator.validateFavouriteCities(),
       this.#controller.updateFavouriteCities
     );
+    this.#router.patch(
+      "/removeFavouriteCity/:id",
+      this.#controller.removeFavouriteCity
+    );
   };
 
   getRouter() {

@@ -44,4 +44,17 @@ export default class UserService {
       throw new Error(`Error updating favourite cities: ${e.message}`);
     }
   };
+
+  removeFavouriteCity = async (userId, cityToRemove) => {
+    try {
+      const updatedUser = await User.findOneAndUpdate(
+        { _id: userId },
+        { $pull: { favouriteCities: cityToRemove } },
+        { new: true }
+      );
+      return updatedUser;
+    } catch (e) {
+      throw new Error(`Error removing favourite city: ${e.message}`);
+    }
+  };
 }
