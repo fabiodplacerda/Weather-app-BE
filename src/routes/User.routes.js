@@ -27,15 +27,18 @@ export default class UserRoutes {
     this.#router.patch(
       "/updatePassword/:id",
       UserValidator.validatePassword(),
+      UserValidator.validateNewPassword(),
       this.#controller.updatePassword
     );
     this.#router.patch(
       "/updateFavouriteCities/:id",
+      UserValidator.validatePassword(),
       UserValidator.validateFavouriteCities(),
       this.#controller.updateFavouriteCities
     );
     this.#router.patch(
       "/removeFavouriteCity/:id",
+      UserValidator.validatePassword(),
       this.#controller.removeFavouriteCity
     );
   };

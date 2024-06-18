@@ -168,7 +168,9 @@ describe("UserService tests", () => {
   describe("updatePassword tests", () => {
     it("should call findOneAndUpdate", async () => {
       // Arrange
+      const findByIdStub = sinon.stub(User, "findById");
       const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
+      findByIdStub.resolves({});
       findOneAndUpdateStub.resolves([]);
       // Act
       await userService.updatePassword();
@@ -176,94 +178,130 @@ describe("UserService tests", () => {
       expect(findOneAndUpdateStub.calledOnce).to.be.true;
 
       findOneAndUpdateStub.restore();
+      findByIdStub.restore();
     });
     it("should return the update user when password is valid", async () => {
       // Arrange
-      const id = "1";
-      const newPassword = "Password22!";
-      const updatedUser = {
+      const testUser = {
+        _id: "1",
         email: "user2@example.com",
         name: "User Two",
-        password: newPassword,
+        password: "Password20!",
       };
+      const id = testUser._id;
+      const newPassword = "Password22!";
+      const updatedUser = { ...testUser, password: newPassword };
+
+      const findByIdStub = sinon.stub(User, "findById");
       const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
+      findByIdStub.resolves(testUser);
       findOneAndUpdateStub.resolves(updatedUser);
       // Act
-      const result = await userService.updatePassword(id, newPassword);
+      const result = await userService.updatePassword(
+        id,
+        testUser.password,
+        newPassword
+      );
       // Assert
       expect(result).to.equal(updatedUser);
 
       findOneAndUpdateStub.restore();
+      findByIdStub.restore();
     });
-    it("should return null when and invalid id is provided", async () => {
+    it("should return null when user is not authenticated", async () => {
       // Arrange
-      const id = "invalid";
+      const id = "1";
       const newPassword = "Password22!";
+
+      const findByIdStub = sinon.stub(User, "findById");
       const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
+      findByIdStub.resolves({});
       findOneAndUpdateStub.resolves(null);
-      const findStub = sinon.stub(User, "find");
-      findStub.returns(null);
+
       // Act
-      const result = await userService.updatePassword(id, newPassword);
+      const result = await userService.updatePassword(
+        id,
+        "password",
+        newPassword
+      );
       // Assert
       expect(result).to.null;
 
       findOneAndUpdateStub.restore();
-      findStub.restore();
+      findByIdStub.restore();
     });
-    it("should return throw an error when updating fails", async () => {
+    it("should throw an error when updating fails", async () => {
       // Arrange
       const testId = "66637a57557ca62365e759fe";
       const newPassword = "NewPassword1!";
       const testError = new Error("Test error");
-      const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
-      findOneAndUpdateStub.throws(testError);
 
-      // Act
-      // Assert
+      const findByIdStub = sinon.stub(User, "findById");
+      const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
+
+      findByIdStub.rejects(testError);
+      findOneAndUpdateStub.rejects(testError); // Simulate rejection
+
+      // Act & Assert
       try {
-        await userService.updatePassword(testId, newPassword);
-        assert.fail("Expected error was not thrown");
+        await userService.updatePassword(testId, "testPassword1", newPassword);
+        throw new Error("Expected error was not thrown");
       } catch (e) {
         expect(e.message).to.equal(
           `Error updating password: ${testError.message}`
         );
+      } finally {
+        findByIdStub.restore();
+        findOneAndUpdateStub.restore();
       }
-
-      findOneAndUpdateStub.restore();
     });
   });
   describe("UpdateFavouriteCities tests ", () => {
     it("should call findOneAndUpdate", async () => {
+      const findByIdStub = sinon.stub(User, "findById");
       const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
       findOneAndUpdateStub.resolves({});
+      findByIdStub.resolves({});
 
       await userService.updateFavouriteCities();
 
       expect(findOneAndUpdateStub.calledOnce).to.be.true;
 
       findOneAndUpdateStub.restore();
+      findByIdStub.restore();
     });
     it("should return the updated user when favouriteCities has been updated successfully", async () => {
-      const id = "1";
+      const testUser = {
+        _id: "1",
+        email: "user2@example.com",
+        name: "User Two",
+        password: "TestPassword1!",
+      };
       const newCity = {
         favouriteCity: { city: "testCity", country: "testCountry" },
       };
       const updatedUser = {
-        email: "test@example.com",
-        name: "test",
+        _id: "1",
+        email: "user2@example.com",
+        name: "User Two",
         password: "TestPassword1!",
         favouriteCities: [newCity],
       };
-
+      const findByIdStub = sinon.stub(User, "findById");
       const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
+      findByIdStub.resolves(testUser);
       findOneAndUpdateStub.resolves(updatedUser);
 
-      const result = await userService.updateFavouriteCities(id, newCity);
+      const result = await userService.updateFavouriteCities(
+        testUser._i,
+        testUser.password,
+        newCity
+      );
 
       expect(result).to.equal(updatedUser);
 
       findOneAndUpdateStub.restore();
+      findByIdStub.restore();
     });
     it("should return error when user cities fails to update", async () => {
       const id = "66637a57557ca62365e759fe";
@@ -271,52 +309,72 @@ describe("UserService tests", () => {
       const newCity = {
         favouriteCity: { city: "testCity", country: "testCountry" },
       };
-
+      const findByIdStub = sinon.stub(User, "findById");
       const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
-      findOneAndUpdateStub.throws(error);
+
+      findByIdStub.rejects(error);
+      findOneAndUpdateStub.rejects(error);
 
       try {
-        await userService.updateFavouriteCities(id, newCity);
-        assert.fail("Expected error was not thrown");
-      } catch (err) {
-        expect(err.message).to.equal(
+        await userService.updateFavouriteCities(id, "testPassword1", newCity);
+        throw new Error("Expected error was not thrown");
+      } catch (e) {
+        expect(e.message).to.equal(
           `Error updating favourite cities: ${error.message}`
         );
+      } finally {
+        findByIdStub.restore();
+        findOneAndUpdateStub.restore();
       }
-      findOneAndUpdateStub.restore();
     });
   });
   describe("removeFavouriteCity tests ", () => {
     it("should call findOneAndUpdate", async () => {
+      const findByIdStub = sinon.stub(User, "findById");
       const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
+      findByIdStub.resolves({});
       findOneAndUpdateStub.resolves({});
 
       await userService.removeFavouriteCity();
 
       expect(findOneAndUpdateStub.calledOnce).to.be.true;
-
+      findByIdStub.restore();
       findOneAndUpdateStub.restore();
     });
     it("should return the updated user when city has been removed successfully", async () => {
-      const id = "1";
+      const testUser = {
+        _id: "1",
+        email: "test@example.com",
+        name: "test",
+        password: "TestPassword1!",
+        favouriteCities: [{ city: "testCity", country: "testCountry" }],
+      };
+
       const cityToRemove = {
         favouriteCity: { city: "testCity", country: "testCountry" },
       };
       const updatedUser = {
+        _id: "1",
         email: "test@example.com",
         name: "test",
         password: "TestPassword1!",
         favouriteCities: [],
       };
-
+      const findByIdStub = sinon.stub(User, "findById");
       const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
+      findByIdStub.resolves(testUser);
       findOneAndUpdateStub.resolves(updatedUser);
 
-      const result = await userService.removeFavouriteCity(id, cityToRemove);
+      const result = await userService.removeFavouriteCity(
+        testUser._id,
+        testUser.password,
+        cityToRemove
+      );
 
       expect(result).to.equal(updatedUser);
 
       findOneAndUpdateStub.restore();
+      findByIdStub.restore();
     });
     it("should return error when user cities fails to update", async () => {
       const id = "66637a57557ca62365e759fe";
@@ -324,19 +382,26 @@ describe("UserService tests", () => {
       const cityToRemove = {
         favouriteCity: { city: "testCity", country: "testCountry" },
       };
-
+      const findByIdStub = sinon.stub(User, "findById");
       const findOneAndUpdateStub = sinon.stub(User, "findOneAndUpdate");
-      findOneAndUpdateStub.throws(error);
+      findByIdStub.rejects(error);
+      findOneAndUpdateStub.rejects(error);
 
       try {
-        await userService.removeFavouriteCity(id, cityToRemove);
-        assert.fail("Expected error was not thrown");
-      } catch (err) {
-        expect(err.message).to.equal(
+        await userService.removeFavouriteCity(
+          id,
+          "testPassword1",
+          cityToRemove
+        );
+        throw new Error("Expected error was not thrown");
+      } catch (e) {
+        expect(e.message).to.equal(
           `Error removing favourite city: ${error.message}`
         );
+      } finally {
+        findByIdStub.restore();
+        findOneAndUpdateStub.restore();
       }
-      findOneAndUpdateStub.restore();
     });
   });
 });

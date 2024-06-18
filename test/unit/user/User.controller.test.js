@@ -228,11 +228,11 @@ describe("UserController tests", () => {
       expect(res.status.calledWith(202)).to.be.true;
       expect(res.json.calledWith(updateUser)).to.be.true;
     });
-    it("should send a 500 status code if user returns null ", async () => {
+    it("should send a 401 status code if user in not auth ", async () => {
       userService.updatePassword.resolves(null);
       await userController.updatePassword(req, res);
-      expect(res.status.calledWith(404)).to.be.true;
-      expect(res.json.calledWith({ message: "user not found" })).to.be.true;
+      expect(res.status.calledWith(401)).to.be.true;
+      expect(res.json.calledWith({ message: "Auth Error" })).to.be.true;
     });
     it("should send a 400 status code if id is null ", async () => {
       req.params.id = null;
@@ -276,6 +276,12 @@ describe("UserController tests", () => {
       expect(res.json.calledWith({ message: "invalid request body" })).to.be
         .true;
     });
+    it("should send a 401 status code if user authentication fails", async () => {
+      userService.updateFavouriteCities.resolves(null);
+      await userController.updateFavouriteCities(req, res);
+      expect(res.status.calledWith(401)).to.be.true;
+      expect(res.json.calledWith({ message: "Auth Error" })).to.be.true;
+    });
   });
   describe("removeFavouriteCity tests", () => {
     it("should update a user's favourite cities", async () => {
@@ -302,6 +308,12 @@ describe("UserController tests", () => {
       expect(res.status.calledWith(400)).to.be.true;
       expect(res.json.calledWith({ message: "invalid request body" })).to.be
         .true;
+    });
+    it("should send a 401 status code if user authentication fails", async () => {
+      userService.removeFavouriteCity.resolves(null);
+      await userController.removeFavouriteCity(req, res);
+      expect(res.status.calledWith(401)).to.be.true;
+      expect(res.json.calledWith({ message: "Auth Error" })).to.be.true;
     });
   });
 });

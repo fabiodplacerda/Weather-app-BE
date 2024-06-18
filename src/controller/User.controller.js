@@ -78,10 +78,14 @@ export default class UserController {
     try {
       if (!id) res.status(400).json({ message: "invalid id" });
       if (!body) res.status(400).json({ message: "invalid request body" });
+      const { password, newPassword } = body;
 
-      const updatedUser = await this.#service.updatePassword(id, body.password);
-
-      if (!updatedUser) res.status(404).json({ message: "user not found" });
+      const updatedUser = await this.#service.updatePassword(
+        id,
+        password,
+        newPassword
+      );
+      if (!updatedUser) res.status(401).json({ message: "Auth Error" });
 
       res.status(202).json(updatedUser);
     } catch (e) {
@@ -96,13 +100,15 @@ export default class UserController {
     try {
       if (!id) res.status(400).json({ message: "invalid id" });
       if (!body) res.status(400).json({ message: "invalid request body" });
+      const { newFavouriteCity, password } = body;
 
       const updatedUser = await this.#service.updateFavouriteCities(
         id,
-        body.newFavouriteCity
+        password,
+        newFavouriteCity
       );
 
-      if (!updatedUser) res.status(404).json({ message: "user not found" });
+      if (!updatedUser) res.status(401).json({ message: "Auth Error" });
 
       res.status(202).json(updatedUser);
     } catch (e) {
@@ -116,13 +122,15 @@ export default class UserController {
     try {
       if (!id) res.status(400).json({ message: "invalid id" });
       if (!body) res.status(400).json({ message: "invalid request body" });
+      const { password, cityToRemove } = body;
 
       const updatedUser = await this.#service.removeFavouriteCity(
         id,
-        body.cityToRemove
+        password,
+        cityToRemove
       );
 
-      if (!updatedUser) res.status(404).json({ message: "user not found" });
+      if (!updatedUser) res.status(401).json({ message: "Auth Error" });
 
       res.status(202).json(updatedUser);
     } catch (e) {

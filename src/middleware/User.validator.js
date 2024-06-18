@@ -41,11 +41,11 @@ export default class UserValidator {
     }
   };
 
-  static validatePassword = () => {
+  static validateNewPassword = () => {
     try {
       return [
         expressValidator
-          .body("password")
+          .body("newPassword")
           .notEmpty()
           .isString()
           .withMessage("password is required")
@@ -57,6 +57,22 @@ export default class UserValidator {
           .withMessage("password must contain at least one number")
           .matches(/(?=.*[@$!%*?&])/)
           .withMessage("password must contain at least one special character"),
+        UserValidator.handleValidationErrors,
+      ];
+    } catch (e) {
+      console.log(e);
+      return [];
+    }
+  };
+
+  static validatePassword = () => {
+    try {
+      return [
+        expressValidator
+          .body("password")
+          .notEmpty()
+          .isString()
+          .withMessage("password is required"),
         UserValidator.handleValidationErrors,
       ];
     } catch (e) {

@@ -29,8 +29,12 @@ export default class UserService {
     }
   };
 
-  updatePassword = async (userId, newPassword) => {
+  updatePassword = async (userId, password, newPassword) => {
     try {
+      const user = await User.findById(userId);
+      if (user.password !== password) {
+        return null;
+      }
       const updatedUser = await User.findOneAndUpdate(
         { _id: userId },
         { password: newPassword },
@@ -42,8 +46,12 @@ export default class UserService {
     }
   };
 
-  updateFavouriteCities = async (userId, newFavouriteCity) => {
+  updateFavouriteCities = async (userId, password, newFavouriteCity) => {
     try {
+      const user = await User.findById(userId);
+      if (user.password !== password) {
+        return null;
+      }
       const updatedUser = await User.findOneAndUpdate(
         { _id: userId },
         { $push: { favouriteCities: newFavouriteCity } },
@@ -55,8 +63,12 @@ export default class UserService {
     }
   };
 
-  removeFavouriteCity = async (userId, cityToRemove) => {
+  removeFavouriteCity = async (userId, password, cityToRemove) => {
     try {
+      const user = await User.findById(userId);
+      if (user.password !== password) {
+        return null;
+      }
       const updatedUser = await User.findOneAndUpdate(
         { _id: userId },
         { $pull: { favouriteCities: cityToRemove } },

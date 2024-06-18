@@ -372,7 +372,8 @@ describe("Integration Tests", () => {
     describe("PATCH request to /user/updatePassword/:id", () => {
       const testUser = users[0];
       const testId = users[0]._id;
-      const newPassword = { password: "newPassword1!" };
+      const testUserPassword = testUser.password;
+      const newPassword = "newPassword1!";
       const updatedUser = {
         ...testUser,
         password: "newPassword1!",
@@ -381,13 +382,19 @@ describe("Integration Tests", () => {
       it("should respond with a 202 status code for PATCH /user/updatePassword/:id", async () => {
         const response = await request
           .patch(`/user/updatePassword/${testId}`)
-          .send(newPassword);
+          .send({
+            password: testUserPassword,
+            newPassword: newPassword,
+          });
         expect(response.status).to.equal(202);
       });
       it("should respond with the updated user", async () => {
         const response = await request
           .patch(`/user/updatePassword/${testId}`)
-          .send(newPassword);
+          .send({
+            password: testUserPassword,
+            newPassword: newPassword,
+          });
 
         const { body } = response;
 
@@ -403,7 +410,10 @@ describe("Integration Tests", () => {
         }).to.deep.equal(updatedUser);
       });
       it("should update the user in the database", async () => {
-        await request.patch(`/user/updatePassword/${testId}`).send(newPassword);
+        await await request.patch(`/user/updatePassword/${testId}`).send({
+          password: testUserPassword,
+          newPassword: newPassword,
+        });
         const response = await request.get("/user/getUsers");
 
         const formattedResponse = response.body.map((user) => {
@@ -416,18 +426,23 @@ describe("Integration Tests", () => {
         });
         expect(formattedResponse).to.deep.include(updatedUser);
       });
-      it("should respond with a 404 status code when a user does not exit", async () => {
-        const nonExistingId = "5ca7177e0774a968c209a928";
+      it("should respond with a 401 if password doesn't match", async () => {
         const response = await request
-          .patch(`/user/updatePassword/${nonExistingId}`)
-          .send(newPassword);
-
-        expect(response.status).to.equal(404);
+          .patch(`/user/updatePassword/${testId}`)
+          .send({
+            password: "NotMatchingPassword",
+            newPassword: newPassword,
+          });
+        expect(response.status).to.equal(401);
+        expect(response.body).to.deep.equal({ message: "Auth Error" });
       });
       it("should respond with a 400 status code when password is invalid", async () => {
         const response = await request
           .patch(`/user/updatePassword/${testId}`)
-          .send({ password: "" });
+          .send({
+            password: testUserPassword,
+            newPassword: "invalidPassword",
+          });
 
         expect(response.status).to.equal(400);
       });
@@ -436,40 +451,45 @@ describe("Integration Tests", () => {
         stub.throws(new Error("test error"));
         const response = await request
           .patch(`/user/updatePassword/${testId}`)
-          .send(newPassword);
+          .send({
+            password: testUserPassword,
+            newPassword: newPassword,
+          });
         expect(response.status).to.equal(500);
       });
     });
     describe("PATCH request to /user/updateFavouriteCities/:id", () => {
       const testUser = users[0];
       const testId = users[0]._id;
+      const testPassword = testUser.password;
       const newCity = {
-        newFavouriteCity: {
-          city: "Sydney",
-          country: "Australia",
-          latitude: -33.8688,
-          longitude: 151.2093,
-        },
+        city: "Sydney",
+        country: "Australia",
+        latitude: -33.8688,
+        longitude: 151.2093,
       };
       const updatedUser = {
         ...testUser,
-        favouriteCities: [
-          ...testUser.favouriteCities,
-          newCity.newFavouriteCity,
-        ],
+        favouriteCities: [...testUser.favouriteCities, newCity],
       };
 
       it("should respond with a 202 status code for PATCH the path /user/updateFavouriteCities/:id", async () => {
         const response = await request
           .patch(`/user/updateFavouriteCities/${testId}`)
-          .send(newCity);
+          .send({
+            newFavouriteCity: newCity,
+            password: testPassword,
+          });
 
         expect(response.status).to.equal(202);
       });
       it("should respond with an updated user", async () => {
         const response = await request
           .patch(`/user/updateFavouriteCities/${testId}`)
-          .send(newCity);
+          .send({
+            newFavouriteCity: newCity,
+            password: testPassword,
+          });
 
         const { body } = response;
         const { __v, ...formattedResponse } = body;
@@ -487,7 +507,10 @@ describe("Integration Tests", () => {
       it("should update the user in the database", async () => {
         const addedUser = await request
           .patch(`/user/updateFavouriteCities/${testId}`)
-          .send(newCity);
+          .send({
+            newFavouriteCity: newCity,
+            password: testPassword,
+          });
         const { name } = addedUser.body;
         const response = await request.get("/user/getUsers");
         const { body } = response;
@@ -499,11 +522,14 @@ describe("Integration Tests", () => {
       it("should update the user in the database when cities array is empty", async () => {
         const updatedUser3 = {
           ...users[3],
-          favouriteCities: [newCity.newFavouriteCity],
+          favouriteCities: [newCity],
         };
         await request
           .patch(`/user/updateFavouriteCities/${users[3]._id}`)
-          .send(newCity);
+          .send({
+            newFavouriteCity: newCity,
+            password: users[3].password,
+          });
         const response = await request.get("/user/getUsers");
         const bodyResponse = response.body[3];
         const formattedCities = bodyResponse.favouriteCities.map((city) => {
@@ -517,41 +543,48 @@ describe("Integration Tests", () => {
         }).to.deep.equal({ ...updatedUser3, __v: 0 });
       });
       it("should respond with a 400 status code if new city has invalid fields", async () => {
-        const invalidNewCity = { newFavouriteCity: { city: "", country: "" } };
+        const invalidNewCity = { city: "", country: "" };
         const response = await request
           .patch(`/user/updateFavouriteCities/${testId}`)
-          .send(invalidNewCity);
+          .send({
+            newFavouriteCity: invalidNewCity,
+            password: testPassword,
+          });
 
         expect(response.status).to.equal(400);
       });
-      it("should respond with a 404 status code id doesn't exists", async () => {
-        const inexistentId = "66637a57557ca62365e75a02";
+      it("should respond with a 401 if user is not authenticated", async () => {
         const response = await request
-          .patch(`/user/updateFavouriteCities/${inexistentId}`)
-          .send(newCity);
+          .patch(`/user/updateFavouriteCities/${testId}`)
+          .send({
+            newFavouriteCity: newCity,
+            password: users[3].password,
+          });
 
-        expect(response.status).to.equal(404);
-        expect(response.body).to.deep.equal({ message: "user not found" });
+        expect(response.status).to.equal(401);
+        expect(response.body).to.deep.equal({ message: "Auth Error" });
       });
       it("should respond with a 500 status code when there is an error", async () => {
         const stub = sinon.stub(userService, "updateFavouriteCities");
         stub.throws(new Error("test error"));
         const response = await request
           .patch(`/user/updateFavouriteCities/${testId}`)
-          .send(newCity);
+          .send({
+            newFavouriteCity: newCity,
+            password: testPassword,
+          });
         expect(response.status).to.equal(500);
       });
     });
     describe("PATCH request to /user/removeFavouriteCity/:id", () => {
       const testUser = users[0];
       const testId = users[0]._id;
+      const testPassword = testUser.password;
       const testCityToRemove = {
-        cityToRemove: {
-          city: "New York",
-          country: "USA",
-          latitude: 40.7128,
-          longitude: -74.006,
-        },
+        city: "New York",
+        country: "USA",
+        latitude: 40.7128,
+        longitude: -74.006,
       };
       const updatedUser = {
         ...testUser,
@@ -568,14 +601,20 @@ describe("Integration Tests", () => {
       it("should respond with a 202 status code for PATCH the path /user/updateFavouriteCities/:id", async () => {
         const response = await request
           .patch(`/user/removeFavouriteCity/${testId}`)
-          .send(testCityToRemove);
+          .send({
+            cityToRemove: testCityToRemove,
+            password: testPassword,
+          });
 
         expect(response.status).to.equal(202);
       });
       it("should respond with an updated user", async () => {
         const response = await request
           .patch(`/user/removeFavouriteCity/${testId}`)
-          .send(testCityToRemove);
+          .send({
+            cityToRemove: testCityToRemove,
+            password: testPassword,
+          });
 
         const { body } = response;
         const { __v, ...formattedResponse } = body;
@@ -593,7 +632,10 @@ describe("Integration Tests", () => {
       it("should update the user in the database", async () => {
         const addedUser = await request
           .patch(`/user/removeFavouriteCity/${testId}`)
-          .send(testCityToRemove);
+          .send({
+            cityToRemove: testCityToRemove,
+            password: testPassword,
+          });
         const { name } = addedUser.body;
         const response = await request.get("/user/getUsers");
         const { body } = response;
@@ -607,7 +649,10 @@ describe("Integration Tests", () => {
 
         await request
           .patch(`/user/removeFavouriteCity/${updatedUser3._id}`)
-          .send(testCityToRemove);
+          .send({
+            cityToRemove: testCityToRemove,
+            password: users[3].password,
+          });
         const response = await request.get("/user/getUsers");
         const bodyResponse = response.body[3];
         const formattedCities = bodyResponse.favouriteCities.map((city) => {
@@ -621,20 +666,25 @@ describe("Integration Tests", () => {
         }).to.deep.equal({ ...updatedUser3, __v: 0 });
       });
       it("should respond with a 404 status code id doesn't exists", async () => {
-        const inexistentId = "66637a57557ca62365e75a02";
         const response = await request
-          .patch(`/user/removeFavouriteCity/${inexistentId}`)
-          .send(testCityToRemove);
+          .patch(`/user/removeFavouriteCity/${testId}`)
+          .send({
+            cityToRemove: testCityToRemove,
+            password: users[3].password,
+          });
 
-        expect(response.status).to.equal(404);
-        expect(response.body).to.deep.equal({ message: "user not found" });
+        expect(response.status).to.equal(401);
+        expect(response.body).to.deep.equal({ message: "Auth Error" });
       });
       it("should respond with a 500 status code when there is an error", async () => {
         const stub = sinon.stub(userService, "removeFavouriteCity");
         stub.throws(new Error("test error"));
         const response = await request
           .patch(`/user/removeFavouriteCity/${testId}`)
-          .send(testCityToRemove);
+          .send({
+            cityToRemove: testCityToRemove,
+            password: testPassword,
+          });
         expect(response.status).to.equal(500);
       });
     });
