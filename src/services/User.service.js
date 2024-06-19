@@ -30,6 +30,7 @@ export default class UserService {
   };
 
   updatePassword = async (userId, password, newPassword) => {
+    // Simple User authentication user simple password strings
     try {
       const user = await User.findById(userId);
       if (user.password !== password) {
@@ -48,6 +49,7 @@ export default class UserService {
 
   updateFavouriteCities = async (userId, password, newFavouriteCity) => {
     try {
+      // Simple User authentication user simple password strings
       const user = await User.findById(userId);
       if (user.password !== password) {
         return null;
@@ -65,6 +67,7 @@ export default class UserService {
 
   removeFavouriteCity = async (userId, password, cityToRemove) => {
     try {
+      // Simple User authentication user simple password strings
       const user = await User.findById(userId);
       if (user.password !== password) {
         return null;

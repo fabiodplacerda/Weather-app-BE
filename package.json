@@ -8,7 +8,7 @@
     "seed": "NODE_ENV=dev node seed/seed-db.js",
     "prod": "NODE_ENV=prod nodemon src/index.js",
     "start": "NODE_ENV=dev nodemon src/index.js",
-    "test": "NODE_ENV=test nodemon --exec 'mocha --timeout 10000 --exit --recursive'",
+    "test": "NODE_ENV=test mocha --timeout 10000 --exit --recursive",
     "coverage": "NODE_ENV=test c8 -r html npm test"
   },
   "keywords": [],

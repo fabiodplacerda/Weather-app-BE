@@ -140,7 +140,7 @@ describe("Integration Tests", () => {
           { ...users[0], __v: 0 }
         );
       });
-      it("should respond with a 404 if user was found", async () => {
+      it("should respond with a 404 if no user was found", async () => {
         const testEmail = "testEmail@example.com";
         const response = await request.get(
           `/user/findUserByEmail/${testEmail}`
@@ -664,6 +664,16 @@ describe("Integration Tests", () => {
           ...bodyResponse,
           favouriteCities: formattedCities,
         }).to.deep.equal({ ...updatedUser3, __v: 0 });
+      });
+      it("should respond with a 401 status if authentication fails (password doesn't match with the database)", async () => {
+        const response = await request
+          .patch(`/user/removeFavouriteCity/${testId}`)
+          .send({
+            cityToRemove: testCityToRemove,
+            password: "incorrectPassword",
+          });
+
+        expect(response.status).to.equal(401);
       });
       it("should respond with a 404 status code id doesn't exists", async () => {
         const response = await request
